@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 from typing import Iterable
 
-from src.toolmate.core.models import DetectedInstallation
+from toolmate.core.models import DetectedInstallation
 
 
 VERSION_PATTERN = re.compile(r"(\d+(?:\.\d+)+(?:[-+._]?[A-Za-z0-9.-]+)?)")

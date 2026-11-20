@@ -1,15 +1,15 @@
-from src.toolmate.detection.executable_detector import detect_executables
+from toolmate.detection.executable_detector import detect_executables
 
 
 def test_detect_executable_unknown_version(monkeypatch, tmp_path):
     executable = tmp_path / "tool.exe"
     executable.write_text("", encoding="utf-8")
     monkeypatch.setattr(
-        "src.toolmate.detection.executable_detector.shutil.which",
+        "toolmate.detection.executable_detector.shutil.which",
         lambda name: str(executable),
     )
     monkeypatch.setattr(
-        "src.toolmate.detection.executable_detector.subprocess.run",
+        "toolmate.detection.executable_detector.subprocess.run",
         lambda *args, **kwargs: type(
             "Result",
             (),

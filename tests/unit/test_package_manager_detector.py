@@ -1,9 +1,9 @@
-from src.toolmate.detection.package_manager_detector import detect_package_managers
+from toolmate.detection.package_manager_detector import detect_package_managers
 
 
 def test_detector_returns_only_available_managers(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.detection.package_manager_detector.shutil.which",
+        "toolmate.detection.package_manager_detector.shutil.which",
         lambda name: "/usr/bin/apt" if name == "apt" else None,
     )
 

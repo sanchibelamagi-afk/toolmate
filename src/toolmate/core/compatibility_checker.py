@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
-from src.toolmate.core.models import (
+from toolmate.core.models import (
     CompatibilityReport,
     CompatibilityResult,
     DependencyInventoryEntry,

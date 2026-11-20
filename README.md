@@ -1,40 +1,67 @@
 # ToolMate
 
-ToolMate is a modular Terminal UI and CLI dependency management application for eSim.
+ToolMate is a Textual-based terminal application for inspecting eSim dependency health on
+Windows and Linux. It detects the system, scans dependencies from the manifest, compares
+versions with compatibility rules, and requires confirmation before running installation
+commands.
 
-## Phase 1
+## Requirements
 
-The current implementation detects the operating system, OS version, CPU architecture,
-available package managers, administrator status, eSim installation location, and relevant
-environment variables. It presents this information in a Textual terminal dashboard.
+- Python 3.10 or later
+- Windows 10/11 or Ubuntu/Debian-based Linux
 
-## Setup
+## Install for development
+
+From the project directory:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .
 python -m pip install -r requirements-dev.txt
-python main.py
 ```
 
-## Test
+Editable installation creates the `toolmate` command in the active environment.
+
+## Run
 
 ```powershell
-python -m pytest tests/unit
+toolmate
 ```
 
-## Dependency inventory
-
-```powershell
-python -c "from src.toolmate.services.scan_service import ScanService; print([(e.id, e.status, len(e.installations)) for e in ScanService('config/manifest.yaml').scan()])"
-```
-
-## Launch dashboard
+Alternatively, run from the project directory:
 
 ```powershell
 python main.py
 ```
 
-The Textual dashboard shows system information, searchable dependency compatibility,
-dependency details, planned commands, and live scan status.
+## TUI controls
+
+- `s`: scan or refresh system information and dependencies
+- `i`: show the install plan and confirmation prompt for the selected dependency
+- `x`: request safe cancellation of a running installation or download
+- `/`: focus dependency filtering
+- `q`: quit
+
+The dashboard includes system details, resource information, dependency status counts,
+search/filter, package details, and live installation output. Download sources require a
+manifest-provided SHA-256 checksum. Installers are never launched automatically after a
+download.
+
+Windows package metadata currently uses the verified Winget IDs `Python.Python.3.14` and
+`KiCad.KiCad`. Ngspice is not present in the default Winget source; its manifest specifies
+Chocolatey package `ngspice` and links to the [official download instructions](https://ngspice.sourceforge.io/download.html)
+for portable/manual setup.
+
+## Tests and lint
+
+```powershell
+python -m pytest tests/unit -q
+ruff check main.py src tests
+```
+
+## Configuration
+
+Dependency definitions and install-source metadata are maintained in `config/manifest.yaml`.
+Version compatibility rules live alongside each dependency; source-specific package IDs are
+not inferred from dependency names.

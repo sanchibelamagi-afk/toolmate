@@ -1,0 +1,76 @@
+Metadata-Version: 2.4
+Name: toolmate
+Version: 0.1.0
+Summary: Textual terminal dependency manager for eSim
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: textual<2.0,>=1.0
+Requires-Dist: rich<14.0,>=13.9
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: packaging>=25.0
+Requires-Dist: psutil>=7.0
+Requires-Dist: requests>=2.32
+Requires-Dist: platformdirs>=4.3
+
+# ToolMate
+
+ToolMate is a Textual-based terminal application for inspecting eSim dependency health on
+Windows and Linux. It detects the system, scans dependencies from the manifest, compares
+versions with compatibility rules, and requires confirmation before running installation
+commands.
+
+## Requirements
+
+- Python 3.10 or later
+- Windows 10/11 or Ubuntu/Debian-based Linux
+
+## Install for development
+
+From the project directory:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .
+python -m pip install -r requirements-dev.txt
+```
+
+Editable installation creates the `toolmate` command in the active environment.
+
+## Run
+
+```powershell
+toolmate
+```
+
+Alternatively, run from the project directory:
+
+```powershell
+python main.py
+```
+
+## TUI controls
+
+- `s`: scan or refresh system information and dependencies
+- `i`: show the install plan and confirmation prompt for the selected dependency
+- `x`: request safe cancellation of a running installation or download
+- `/`: focus dependency filtering
+- `q`: quit
+
+The dashboard includes system details, resource information, dependency status counts,
+search/filter, package details, and live installation output. Download sources require a
+manifest-provided SHA-256 checksum. Installers are never launched automatically after a
+download.
+
+## Tests and lint
+
+```powershell
+python -m pytest tests/unit -q
+ruff check main.py src tests
+```
+
+## Configuration
+
+Dependency definitions and install-source metadata are maintained in `config/manifest.yaml`.
+Version compatibility rules live alongside each dependency; source-specific package IDs are
+not inferred from dependency names.

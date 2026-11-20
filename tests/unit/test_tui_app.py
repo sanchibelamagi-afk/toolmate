@@ -1,12 +1,12 @@
 import asyncio
 
-from src.toolmate.core.models import CompatibilityReport, CompatibilityResult
-from src.toolmate.tui.app import InstallConfirmScreen, ToolMateApp
+from toolmate.core.models import CompatibilityReport, CompatibilityResult
+from toolmate.tui.app import InstallConfirmScreen, ToolMateApp
 
 
 def test_textual_app_smoke(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.tui.app.detect_system_info",
+        "toolmate.tui.app.detect_system_info",
         lambda: type(
             "SystemInfo",
             (),
@@ -21,7 +21,7 @@ def test_textual_app_smoke(monkeypatch):
         )(),
     )
     monkeypatch.setattr(
-        "src.toolmate.tui.app.ScanService.evaluate",
+        "toolmate.tui.app.ScanService.evaluate",
         lambda self: type(
             "Report",
             (),
@@ -48,7 +48,7 @@ def test_textual_app_smoke(monkeypatch):
 
 def test_install_action_opens_confirmation_modal(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.tui.app.detect_system_info",
+        "toolmate.tui.app.detect_system_info",
         lambda: type(
             "SystemInfo",
             (),
@@ -63,7 +63,7 @@ def test_install_action_opens_confirmation_modal(monkeypatch):
         )(),
     )
     monkeypatch.setattr(
-        "src.toolmate.tui.app.ScanService.evaluate",
+        "toolmate.tui.app.ScanService.evaluate",
         lambda self: CompatibilityReport(
             entries=(
                 CompatibilityResult(
@@ -78,7 +78,7 @@ def test_install_action_opens_confirmation_modal(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "src.toolmate.tui.app.ToolMateApp._planned_command",
+        "toolmate.tui.app.ToolMateApp._planned_command",
         lambda self, entry: "apt-get install -y demo",
     )
 

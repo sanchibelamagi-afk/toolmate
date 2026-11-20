@@ -178,13 +178,13 @@ Install missing dependencies safely.
 
 - [x] Installation source selection.
 - [x] Package manager integration.
-- [ ] Download manager.
-- [ ] Checksum verification.
+- [x] HTTPS download manager for manifest-declared artifacts.
+- [x] SHA-256 verification before accepting downloaded artifacts.
 - [x] Installation planning.
 - [x] User confirmation.
 - [x] Permission handling.
 - [x] Progress display.
-- [ ] Cancellation where safe.
+- [x] Safe cancellation for active package-manager processes and downloads.
 
 ### Initial installation methods
 

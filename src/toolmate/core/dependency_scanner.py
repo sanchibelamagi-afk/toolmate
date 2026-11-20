@@ -3,14 +3,14 @@ from __future__ import annotations
 import sys
 from typing import Any, Iterable, Mapping
 
-from src.toolmate.core.models import DependencyInventoryEntry, DetectedInstallation
-from src.toolmate.detection.executable_detector import detect_executables
-from src.toolmate.detection.package_manager_detector import (
+from toolmate.core.models import DependencyInventoryEntry, DetectedInstallation
+from toolmate.detection.executable_detector import detect_executables
+from toolmate.detection.package_manager_detector import (
     detect_package_managers,
     query_package_version,
 )
-from src.toolmate.detection.python_package_detector import detect_python_package
-from src.toolmate.detection.registry_detector import detect_installed_registry_entry
+from toolmate.detection.python_package_detector import detect_python_package
+from toolmate.detection.registry_detector import detect_installed_registry_entry
 
 
 class DependencyScanner:

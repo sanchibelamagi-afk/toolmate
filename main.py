@@ -1,9 +1,7 @@
 import sys
 
-from src.toolmate.diagnostics.logger import configure_logging
-from src.toolmate.tui.app import main
+from toolmate.cli import main
 
 
 if __name__ == "__main__":
-    configure_logging()
     sys.exit(main())

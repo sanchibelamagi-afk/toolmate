@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.toolmate.core.compatibility_checker import CompatibilityChecker
-from src.toolmate.core.models import (
+from toolmate.core.compatibility_checker import CompatibilityChecker
+from toolmate.core.models import (
     DependencyInventoryEntry,
     DetectedInstallation,
 )

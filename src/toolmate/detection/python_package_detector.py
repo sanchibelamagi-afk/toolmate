@@ -1,6 +1,6 @@
 from importlib import metadata
 
-from src.toolmate.core.models import DetectedInstallation
+from toolmate.core.models import DetectedInstallation
 
 
 def detect_python_package(package_name: str) -> list[DetectedInstallation]:

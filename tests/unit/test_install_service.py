@@ -1,4 +1,4 @@
-from src.toolmate.services.install_service import InstallService
+from toolmate.services.install_service import InstallService
 
 
 def test_manifest_has_verified_kicad_winget_id_and_ngspice_fallback():

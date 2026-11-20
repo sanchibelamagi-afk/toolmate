@@ -52,3 +52,9 @@ Dependencies, Package Details, and Install Output. The dependency list is search
 and the status strip summarizes total, installed, outdated, missing, and incompatible
 items. System detection, scanning, compatibility, and installation remain in backend
 services; TUI widgets only display results, request confirmation, and invoke services.
+
+The installable Python package uses the `src/toolmate` package layout and exposes
+`toolmate.cli:main` through the `toolmate` console script. Manifest-declared downloads
+must use HTTPS and a configured SHA-256 digest; downloaded artifacts are verified before
+being made available and are not launched automatically. Active package processes and
+downloads accept cooperative cancellation where supported.

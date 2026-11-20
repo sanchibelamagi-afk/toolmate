@@ -1,4 +1,5 @@
 import asyncio
+from threading import Event
 
 import psutil
 from rich.text import Text
@@ -16,10 +17,10 @@ from textual.widgets import (
     Static,
 )
 
-from src.toolmate.core.models import CompatibilityReport, CompatibilityResult, SystemInfo
-from src.toolmate.core.system_detector import detect_system_info
-from src.toolmate.services.scan_service import ScanService
-from src.toolmate.services.install_service import InstallService
+from toolmate.core.models import CompatibilityReport, CompatibilityResult, SystemInfo
+from toolmate.core.system_detector import detect_system_info
+from toolmate.services.scan_service import ScanService
+from toolmate.services.install_service import InstallService
 
 
 STATUS_COLORS = {
@@ -140,6 +141,7 @@ class ToolMateApp(App[None]):
     BINDINGS = [
         Binding("s", "scan", "[s] Scan"),
         Binding("i", "install", "[i] Install"),
+        Binding("x", "cancel_install", "[x] Cancel install"),
         Binding("slash", "filter", "[/] Filter"),
         Binding("q", "quit", "[q] Quit"),
     ]
@@ -150,6 +152,7 @@ class ToolMateApp(App[None]):
         self.report: CompatibilityReport | None = None
         self.entries = []
         self.selected_id: str | None = None
+        self.active_install_cancel: Event | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -167,7 +170,7 @@ class ToolMateApp(App[None]):
                 yield Static("Select a dependency.", id="detail")
                 yield RichLog(id="install-output", wrap=True, highlight=True)
         yield Static(
-            "s Scan   i Install   / Filter   q Quit",
+            "s Scan   i Install   x Cancel   / Filter   q Quit",
             id="keys",
         )
         yield Footer()
@@ -295,7 +298,7 @@ class ToolMateApp(App[None]):
 
     def _constraints(self, dependency_id: str) -> str:
         manifest = ScanService(self.manifest_path)
-        from src.toolmate.core.manifest_manager import ManifestManager
+        from toolmate.core.manifest_manager import ManifestManager
         data = ManifestManager(manifest.manifest_path).load()
         dependency = next(
             (item for item in data["dependencies"] if item["id"] == dependency_id),
@@ -347,6 +350,8 @@ class ToolMateApp(App[None]):
         output.clear()
         output.write(f"Starting installation for {entry.name}...")
         service = InstallService(self.manifest_path)
+        cancel_event = Event()
+        self.active_install_cancel = cancel_event
 
         def stream_output(line: str) -> None:
             self.call_from_thread(output.write, line)
@@ -357,13 +362,19 @@ class ToolMateApp(App[None]):
                 entry.id,
                 True,
                 stream_output,
+                cancel_event,
             )
         except Exception as exc:
             output.write(f"Installation failed to start: {exc}")
             self.notify(f"Installation failed: {exc}", severity="error")
             return
+        finally:
+            self.active_install_cancel = None
 
-        if result.succeeded:
+        if result.cancelled:
+            output.write("Operation cancelled.")
+            self.notify("Operation cancelled", severity="warning")
+        elif result.succeeded:
             output.write("Installation completed successfully.")
             self.notify("Installation completed")
         else:
@@ -371,6 +382,13 @@ class ToolMateApp(App[None]):
             self.notify("Installation completed with errors", severity="warning")
 
         await self.action_scan()
+
+    def action_cancel_install(self) -> None:
+        if self.active_install_cancel is None:
+            self.notify("No cancellable operation is running.", severity="warning")
+            return
+        self.active_install_cancel.set()
+        self.notify("Cancellation requested. Waiting for the process to stop.")
 
 
 def main() -> int:

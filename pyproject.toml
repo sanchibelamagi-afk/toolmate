@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toolmate"
+version = "0.1.0"
+description = "Textual terminal dependency manager for eSim"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "textual>=1.0,<2.0",
+    "rich>=13.9,<14.0",
+    "PyYAML>=6.0",
+    "packaging>=25.0",
+    "psutil>=7.0",
+    "requests>=2.32",
+    "platformdirs>=4.3",
+]
+
+[project.scripts]
+toolmate = "toolmate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

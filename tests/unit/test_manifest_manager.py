@@ -1,4 +1,4 @@
-from src.toolmate.core.manifest_manager import ManifestError, ManifestManager
+from toolmate.core.manifest_manager import ManifestError, ManifestManager
 
 
 def test_load_valid_manifest(tmp_path):

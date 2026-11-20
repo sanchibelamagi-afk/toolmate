@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from src.toolmate.core.dependency_scanner import DependencyScanner
-from src.toolmate.core.manifest_manager import ManifestManager
-from src.toolmate.core.compatibility_checker import CompatibilityChecker
-from src.toolmate.core.models import CompatibilityReport, DependencyInventoryEntry
+from toolmate.core.dependency_scanner import DependencyScanner
+from toolmate.core.manifest_manager import ManifestManager
+from toolmate.core.compatibility_checker import CompatibilityChecker
+from toolmate.core.models import CompatibilityReport, DependencyInventoryEntry
 
 
 class ScanService:

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from src.toolmate.core.models import DetectedInstallation
+from toolmate.core.models import DetectedInstallation
 
 
 def detect_installed_registry_entry(

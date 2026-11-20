@@ -1,15 +1,15 @@
 from pathlib import Path
 
-from src.toolmate.core.system_detector import detect_system_info
+from toolmate.core.system_detector import detect_system_info
 
 
 def test_detect_system_info_returns_required_fields(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.core.system_detector.detect_package_managers",
+        "toolmate.core.system_detector.detect_package_managers",
         lambda: ("apt",),
     )
     monkeypatch.setattr(
-        "src.toolmate.core.system_detector.locate_esim",
+        "toolmate.core.system_detector.locate_esim",
         lambda: Path("/tmp/esim"),
     )
 

@@ -1,23 +1,23 @@
 from pathlib import Path
 
-from src.toolmate.core.dependency_scanner import DependencyScanner
+from toolmate.core.dependency_scanner import DependencyScanner
 
 
 def test_scans_missing_dependency(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_executables",
+        "toolmate.core.dependency_scanner.detect_executables",
         lambda *args, **kwargs: [],
     )
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_python_package",
+        "toolmate.core.dependency_scanner.detect_python_package",
         lambda *args, **kwargs: [],
     )
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_installed_registry_entry",
+        "toolmate.core.dependency_scanner.detect_installed_registry_entry",
         lambda *args, **kwargs: [],
     )
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_package_managers",
+        "toolmate.core.dependency_scanner.detect_package_managers",
         lambda: (),
     )
 
@@ -41,7 +41,7 @@ def test_scans_missing_dependency(monkeypatch):
 
 
 def test_scans_multiple_installations_without_duplicates(monkeypatch):
-    from src.toolmate.core.models import DetectedInstallation
+    from toolmate.core.models import DetectedInstallation
 
     detections = [
         DetectedInstallation(
@@ -61,11 +61,11 @@ def test_scans_multiple_installations_without_duplicates(monkeypatch):
         ),
     ]
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_executables",
+        "toolmate.core.dependency_scanner.detect_executables",
         lambda *args, **kwargs: detections,
     )
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_package_managers",
+        "toolmate.core.dependency_scanner.detect_package_managers",
         lambda: (),
     )
 
@@ -86,11 +86,11 @@ def test_scans_multiple_installations_without_duplicates(monkeypatch):
 
 def test_scanner_reports_detection_errors(monkeypatch):
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_executables",
+        "toolmate.core.dependency_scanner.detect_executables",
         lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("scan failed")),
     )
     monkeypatch.setattr(
-        "src.toolmate.core.dependency_scanner.detect_package_managers",
+        "toolmate.core.dependency_scanner.detect_package_managers",
         lambda: (),
     )
 

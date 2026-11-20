@@ -1,13 +1,16 @@
 from collections.abc import Callable
 import shutil
 import sys
+from pathlib import Path
+from threading import Event
 from typing import Any, Mapping
 
-from src.toolmate.core.manifest_manager import ManifestManager
-from src.toolmate.installers.apt_installer import AptInstaller
-from src.toolmate.installers.base_installer import InstallationResult
-from src.toolmate.installers.chocolatey_installer import ChocolateyInstaller
-from src.toolmate.installers.winget_installer import WingetInstaller
+from toolmate.core.manifest_manager import ManifestManager
+from toolmate.installers.apt_installer import AptInstaller
+from toolmate.installers.base_installer import InstallationResult
+from toolmate.installers.chocolatey_installer import ChocolateyInstaller
+from toolmate.installers.download_installer import DownloadInstaller
+from toolmate.installers.winget_installer import WingetInstaller
 
 
 class InstallService:
@@ -30,6 +33,12 @@ class InstallService:
         if shutil.which("apt") and package_manager.get("apt"):
             return ("apt-get", "install", "-y", str(package_manager["apt"])), f"APT package {package_manager['apt']}"
         installation = dependency.get("installation")
+        download = installation.get("download") if isinstance(installation, Mapping) else None
+        if isinstance(download, Mapping):
+            return (
+                f"Download and verify {download.get('filename', 'package')}",
+                f"SHA-256 verification required before use ({download.get('url', '')})",
+            )
         manual_url = installation.get("manual_url") if isinstance(installation, Mapping) else None
         if manual_url:
             return (f"Manual download: {manual_url}",), "Manual installation guidance"
@@ -40,6 +49,7 @@ class InstallService:
         dependency_id: str,
         approved: bool,
         on_output: Callable[[str], None] | None = None,
+        cancel_event: Event | None = None,
     ) -> InstallationResult:
         if not approved:
             raise PermissionError("Installation requires explicit user approval.")
@@ -51,13 +61,56 @@ class InstallService:
 
         if sys.platform.startswith("win"):
             if shutil.which("winget") and package_manager.get("winget"):
-                return WingetInstaller().install(str(package_manager["winget"]), on_output)
+                return WingetInstaller().install(
+                    str(package_manager["winget"]), on_output, cancel_event
+                )
             if shutil.which("choco") and package_manager.get("choco"):
-                return ChocolateyInstaller().install(str(package_manager["choco"]), on_output)
+                return ChocolateyInstaller().install(
+                    str(package_manager["choco"]), on_output, cancel_event
+                )
         if shutil.which("apt") and package_manager.get("apt"):
-            return AptInstaller().install(str(package_manager["apt"]), on_output)
+            return AptInstaller().install(
+                str(package_manager["apt"]), on_output, cancel_event
+            )
 
         installation = dependency.get("installation")
+        download = installation.get("download") if isinstance(installation, Mapping) else None
+        if isinstance(download, Mapping):
+            url = download.get("url")
+            filename = download.get("filename")
+            checksum = download.get("sha256")
+            if not all(isinstance(value, str) and value for value in (url, filename, checksum)):
+                raise ValueError("Manifest downloads require url, filename, and sha256.")
+            if Path(filename).name != filename:
+                raise ValueError("Manifest download filename must not contain a path.")
+            try:
+                output_path = DownloadInstaller().download(
+                    url,
+                    Path("cache") / filename,
+                    checksum,
+                    cancel_event=cancel_event,
+                    on_progress=(
+                        lambda downloaded, total: on_output(
+                            f"Download: {downloaded} / {total} bytes"
+                        )
+                        if on_output is not None
+                        else None
+                    ),
+                )
+            except InterruptedError:
+                return InstallationResult(
+                    command=("download", url),
+                    exit_code=1,
+                    output="Download cancelled.",
+                    cancelled=True,
+                )
+            if on_output is not None:
+                on_output(f"Downloaded and verified package: {output_path}")
+            return InstallationResult(
+                command=("download", url),
+                exit_code=0,
+                output=f"Downloaded and SHA-256 verified to {output_path}",
+            )
         manual_url = installation.get("manual_url") if isinstance(installation, Mapping) else None
         if manual_url:
             raise RuntimeError(

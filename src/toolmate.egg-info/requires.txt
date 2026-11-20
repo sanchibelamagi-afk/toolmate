@@ -1,0 +1,7 @@
+textual<2.0,>=1.0
+rich<14.0,>=13.9
+PyYAML>=6.0
+packaging>=25.0
+psutil>=7.0
+requests>=2.32
+platformdirs>=4.3

@@ -3,10 +3,10 @@ import platform
 import sys
 from pathlib import Path
 
-from src.toolmate.core.models import SystemInfo
-from src.toolmate.detection.package_manager_detector import detect_package_managers
-from src.toolmate.platform import linux, windows
-from src.toolmate.platform.paths import first_existing_path
+from toolmate.core.models import SystemInfo
+from toolmate.detection.package_manager_detector import detect_package_managers
+from toolmate.platform import linux, windows
+from toolmate.platform.paths import first_existing_path
 
 
 ESIM_ENVIRONMENT_VARIABLES = (

@@ -1,4 +1,4 @@
-from src.toolmate.services.scan_service import ScanService
+from toolmate.services.scan_service import ScanService
 
 
 def test_scan_service_loads_sample_manifest():
