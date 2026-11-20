@@ -35,12 +35,12 @@ STATUS_COLORS = {
 class InstallConfirmScreen(ModalScreen[bool]):
     def __init__(self, name: str, command: str) -> None:
         super().__init__()
-        self.name = name
+        self.dependency_name = name
         self.command = command
 
     def compose(self) -> ComposeResult:
         with Vertical(id="confirm-dialog"):
-            yield Static(f"[bold]Install {self.name}[/bold]")
+            yield Static(f"[bold]Install {self.dependency_name}[/bold]")
             yield Static(Text(self.command, style="bold cyan"), id="confirm-command")
             yield Static("No command will execute automatically.")
             with Horizontal(id="confirm-actions"):
@@ -269,7 +269,7 @@ class ToolMateApp(App[None]):
     def action_filter(self) -> None:
         self.query_one("#search", Input).focus()
 
-    async def action_install(self) -> None:
+    def action_install(self) -> None:
         if not self.report:
             self.notify("Run a scan before installation.", severity="warning")
             return
@@ -282,38 +282,48 @@ class ToolMateApp(App[None]):
         )
         if entry is None:
             return
-        acknowledged = await self.push_screen_wait(
-            InstallConfirmScreen(entry.name, self._planned_command(entry))
+        self.push_screen(
+            InstallConfirmScreen(entry.name, self._planned_command(entry)),
+            callback=lambda approved: self._on_install_confirmation(entry, approved),
         )
-        if acknowledged:
-            output = self.query_one("#install-output", RichLog)
-            output.clear()
-            output.write(f"Starting installation for {entry.name}...")
-            service = InstallService(self.manifest_path)
 
-            def stream_output(line: str) -> None:
-                self.call_from_thread(output.write, line)
+    def _on_install_confirmation(
+        self,
+        entry: CompatibilityResult,
+        approved: bool | None,
+    ) -> None:
+        if approved:
+            self.run_worker(self._run_installation(entry))
 
-            try:
-                result = await asyncio.to_thread(
-                    service.execute,
-                    entry.id,
-                    True,
-                    stream_output,
-                )
-            except Exception as exc:
-                output.write(f"Installation failed to start: {exc}")
-                self.notify(f"Installation failed: {exc}", severity="error")
-                return
+    async def _run_installation(self, entry: CompatibilityResult) -> None:
+        output = self.query_one("#install-output", RichLog)
+        output.clear()
+        output.write(f"Starting installation for {entry.name}...")
+        service = InstallService(self.manifest_path)
 
-            if result.succeeded:
-                output.write("Installation completed successfully.")
-                self.notify("Installation completed")
-            else:
-                output.write(f"Installation exited with code {result.exit_code}.")
-                self.notify("Installation completed with errors", severity="warning")
+        def stream_output(line: str) -> None:
+            self.call_from_thread(output.write, line)
 
-            await self.action_scan()
+        try:
+            result = await asyncio.to_thread(
+                service.execute,
+                entry.id,
+                True,
+                stream_output,
+            )
+        except Exception as exc:
+            output.write(f"Installation failed to start: {exc}")
+            self.notify(f"Installation failed: {exc}", severity="error")
+            return
+
+        if result.succeeded:
+            output.write("Installation completed successfully.")
+            self.notify("Installation completed")
+        else:
+            output.write(f"Installation exited with code {result.exit_code}.")
+            self.notify("Installation completed with errors", severity="warning")
+
+        await self.action_scan()
 
 
 def main() -> int:
