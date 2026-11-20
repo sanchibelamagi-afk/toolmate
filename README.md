@@ -29,3 +29,12 @@ python -m pytest tests/unit
 ```powershell
 python -c "from src.toolmate.services.scan_service import ScanService; print([(e.id, e.status, len(e.installations)) for e in ScanService('config/manifest.yaml').scan()])"
 ```
+
+## Launch dashboard
+
+```powershell
+python main.py
+```
+
+The dashboard shows system information, dependency compatibility, dependency details,
+live scan status, and recent log output.

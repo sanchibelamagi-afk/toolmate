@@ -151,18 +151,18 @@ Present dependency health clearly.
 
 ### Features
 
-- Main dashboard.
-- Dependency table.
-- Status indicators.
-- System information panel.
-- Scan button.
-- Refresh button.
-- Dependency details.
-- Logs panel.
+- [x] Main dashboard.
+- [x] Dependency table.
+- [x] Status indicators.
+- [x] System information panel.
+- [x] Scan button.
+- [x] Refresh button.
+- [x] Dependency details.
+- [x] Logs panel.
 
 ### Deliverable
 
-A usable GUI displaying live scan results.
+**Status:** [x] A usable GUI displaying live scan results.
 
 ---
 
