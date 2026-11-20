@@ -37,6 +37,11 @@ def test_textual_app_smoke(monkeypatch):
             assert app.query_one("#dependency-table") is not None
             assert app.query_one("#detail") is not None
             assert app.query_one("#install-output") is not None
+            assert app.query_one("#header-bar").border_title == "System Overview"
+            assert app.query_one("#list-pane").border_title == "Dependencies"
+            assert app.query_one("#detail-pane").border_title == "Package Details"
+            assert app.query_one("#install-output").border_title == "Install Output"
+            assert app.query_one("#status-strip").border_title == "Environment Health"
 
     asyncio.run(smoke())
 

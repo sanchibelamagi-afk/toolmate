@@ -1,9 +1,9 @@
 ┌─────────────────────────────────────────────┐
-│              TOOLMATE GUI                  │
-│                 Textual + Rich                      │
+│              TOOLMATE TUI                  │
+│               Textual + Rich                │
 │                                             │
-│  Dashboard │ Dependency Status │ Logs       │
-│  Install   │ Fix All           │ Settings   │
+│  System Overview │ Dependencies │ Details  │
+│  Scan [s] │ Install [i] │ Filter [/]      │
 └──────────────────────┬──────────────────────┘
                        │
                        ▼
@@ -46,3 +46,9 @@
 │                                             │
 │ Applications │ Packages │ Files │ Config    │
 └─────────────────────────────────────────────┘
+
+The terminal UI uses rounded Tokyo-Night/dark-slate panels for System Overview,
+Dependencies, Package Details, and Install Output. The dependency list is searchable,
+and the status strip summarizes total, installed, outdated, missing, and incompatible
+items. System detection, scanning, compatibility, and installation remain in backend
+services; TUI widgets only display results, request confirmation, and invoke services.

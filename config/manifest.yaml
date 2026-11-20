@@ -60,8 +60,14 @@ dependencies:
         linux:
           - "/usr/bin/ngspice"
     package_manager:
-      winget: nullsoft.ngspice
       apt: ngspice
+      choco: ngspice
+    installation:
+      manual_url: https://ngspice.sourceforge.io/download.html
+      notes: >-
+        Not listed in the default winget catalog. Windows users can use the
+        Chocolatey ngspice package or download the official portable 7z bundle
+        from the ngspice download page and add its bin directory to PATH.
 
   - id: kicad
     name: KiCad

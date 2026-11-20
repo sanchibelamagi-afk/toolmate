@@ -30,8 +30,8 @@ The application will follow a modular architecture with separation between:
 ## Development principles
 
 1. Implement one feature at a time.
-2. Keep GUI code separate from core logic.
-3. Never execute system commands directly from GUI widgets.
+2. Keep TUI code separate from core logic.
+3. Never execute system commands directly from TUI widgets.
 4. Never hardcode dependency requirements into the scanner.
 5. Use the manifest as the source of dependency requirements.
 6. Use platform-specific adapters for Windows and Linux.
@@ -159,10 +159,13 @@ Present dependency health clearly.
 - [x] Refresh keybinding.
 - [x] Dependency details pane.
 - [x] Install confirmation modal.
+- [x] Tokyo-Night dark slate theme with rounded, titled panels.
+- [x] System resource summary and status-count strip.
+- [x] Verified Windows package IDs and manual fallback guidance.
 
 ### Deliverable
 
-**Status:** [x] A usable GUI displaying live scan results.
+**Status:** [x] A polished TUI displaying live scan results and dependency health.
 
 ---
 
@@ -474,7 +477,7 @@ Create files in this order.
 | `detection/registry_detector.py` | Detect Windows installations |
 | `core/compatibility_checker.py` | Validate versions |
 
-## Stage 4: GUI
+## Stage 4: Textual TUI
 
 | File | Responsibility |
 |---|---|
@@ -513,7 +516,7 @@ Create files in this order.
 | `tests/conftest.py` | Shared fixtures |
 | `tests/unit/` | Unit tests |
 | `tests/integration/` | Integration tests |
-| `tests/gui/` | GUI tests |
+| `tests/unit/test_tui_app.py` | Textual TUI pilot tests |
 | `packaging/toolmate.spec` | PyInstaller configuration |
 
 ---
@@ -595,7 +598,7 @@ We do not need to install these separately.
 | Package | Purpose |
 |---|---|
 | pytest | Testing |
-| textual.testing | TUI testing support | Yes |
+| pytest | Unit and Textual pilot test runner |
 | pytest-cov | Coverage |
 | Ruff | Linting and formatting |
 | mypy | Type checking |
@@ -790,7 +793,7 @@ The first version should:
 5. Scan a small set of dependencies.
 6. Detect installation status and version.
 7. Compare versions against requirements.
-8. Display results in a GUI.
+8. Display results in the Textual TUI.
 9. Allow the user to refresh the scan.
 
 ### Initial dependencies for scanner testing
@@ -842,7 +845,7 @@ Installation is a separate milestone. We must prove detection works before allow
 
 ToolMate will be developed as a **detection-first, verification-driven system**.
 
-The core engine should remain independent of the GUI and operating system wherever possible. Platform-specific operations will be isolated behind adapters. Dependencies will be defined through a manifest rather than hardcoded into application logic.
+The core engine should remain independent of the TUI and operating system wherever possible. Platform-specific operations will be isolated behind adapters. Dependencies will be defined through a manifest rather than hardcoded into application logic.
 
 The first functional goal is not to install everything.
 

@@ -7,7 +7,6 @@ from src.toolmate.core.manifest_manager import ManifestManager
 from src.toolmate.installers.apt_installer import AptInstaller
 from src.toolmate.installers.base_installer import InstallationResult
 from src.toolmate.installers.chocolatey_installer import ChocolateyInstaller
-from src.toolmate.installers.pip_installer import PipInstaller
 from src.toolmate.installers.winget_installer import WingetInstaller
 
 
@@ -30,7 +29,11 @@ class InstallService:
                 return command, f"Chocolatey package {package_manager['choco']}"
         if shutil.which("apt") and package_manager.get("apt"):
             return ("apt-get", "install", "-y", str(package_manager["apt"])), f"APT package {package_manager['apt']}"
-        return (sys.executable, "-m", "pip", "install", dependency_id), f"Python package {dependency_id}"
+        installation = dependency.get("installation")
+        manual_url = installation.get("manual_url") if isinstance(installation, Mapping) else None
+        if manual_url:
+            return (f"Manual download: {manual_url}",), "Manual installation guidance"
+        return (), "No supported installation source is configured for this platform"
 
     def execute(
         self,
@@ -54,9 +57,13 @@ class InstallService:
         if shutil.which("apt") and package_manager.get("apt"):
             return AptInstaller().install(str(package_manager["apt"]), on_output)
 
-        category = dependency.get("category")
-        if category == "runtime" or shutil.which("pip"):
-            return PipInstaller().install(dependency_id, on_output)
+        installation = dependency.get("installation")
+        manual_url = installation.get("manual_url") if isinstance(installation, Mapping) else None
+        if manual_url:
+            raise RuntimeError(
+                f"No automated package manager is available. Follow the manual "
+                f"installation guidance: {manual_url}"
+            )
         raise RuntimeError("No supported installation source is available.")
 
     def _dependency(self, dependency_id: str) -> Mapping[str, Any]:

@@ -1,5 +1,6 @@
 import asyncio
 
+import psutil
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -57,13 +58,24 @@ class ToolMateApp(App[None]):
 
     CSS = """
     Screen {
-        background: #0d1117;
+        background: #1a1b26;
+        color: #c0caf5;
     }
     #header-bar {
-        height: 5;
-        padding: 1 2;
-        border: round #30363d;
-        background: #161b22;
+        height: 4;
+        padding: 0 2;
+        border: round #414868;
+        background: #24283b;
+        border-title-color: #7aa2f7;
+        border-title-style: bold;
+    }
+    #status-strip {
+        height: 3;
+        content-align: center middle;
+        border: round #414868;
+        background: #1f2335;
+        border-title-color: #bb9af7;
+        border-title-style: bold;
     }
     #workspace {
         height: 1fr;
@@ -71,13 +83,17 @@ class ToolMateApp(App[None]):
     }
     #list-pane {
         width: 2fr;
-        border: round #30363d;
+        border: round #414868;
         padding: 0 1;
+        border-title-color: #7aa2f7;
+        border-title-style: bold;
     }
     #detail-pane {
         width: 1fr;
-        border: round #30363d;
+        border: round #414868;
         padding: 1 2;
+        border-title-color: #bb9af7;
+        border-title-style: bold;
     }
     #search {
         margin: 1 0;
@@ -90,28 +106,30 @@ class ToolMateApp(App[None]):
     }
     #install-output {
         height: 10;
-        border-top: solid #30363d;
+        border: round #414868;
+        border-title-color: #7dcfff;
+        border-title-style: bold;
     }
     #keys {
         height: 3;
         content-align: center middle;
-        background: #161b22;
-        color: #c9d1d9;
-        border-top: solid #30363d;
+        background: #24283b;
+        color: #c0caf5;
+        border-top: solid #414868;
     }
     #confirm-dialog {
         width: 78;
         height: 12;
         margin: 2 4;
         padding: 1 2;
-        border: thick #58a6ff;
-        background: #161b22;
+        border: thick #7aa2f7;
+        background: #24283b;
     }
     #confirm-command {
         height: 3;
         margin: 1 0;
         padding: 1;
-        background: #0d1117;
+        background: #1a1b26;
     }
     #confirm-actions {
         height: 3;
@@ -136,6 +154,7 @@ class ToolMateApp(App[None]):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Static("Detecting system...", id="header-bar")
+        yield Static("No scan completed.", id="status-strip")
         with Horizontal(id="workspace"):
             with Vertical(id="list-pane"):
                 yield Input(placeholder="Filter dependencies...", id="search")
@@ -154,6 +173,11 @@ class ToolMateApp(App[None]):
         yield Footer()
 
     async def on_mount(self) -> None:
+        self.query_one("#header-bar", Static).border_title = "System Overview"
+        self.query_one("#status-strip", Static).border_title = "Environment Health"
+        self.query_one("#list-pane", Vertical).border_title = "Dependencies"
+        self.query_one("#detail-pane", Vertical).border_title = "Package Details"
+        self.query_one("#install-output", RichLog).border_title = "Install Output"
         await self.action_scan()
 
     async def action_scan(self) -> None:
@@ -176,12 +200,14 @@ class ToolMateApp(App[None]):
 
     def _render_header(self, info: SystemInfo) -> None:
         managers = ", ".join(info.package_managers) if info.package_managers else "None"
+        cpu_count = psutil.cpu_count(logical=True) or "Unknown"
+        memory_gib = psutil.virtual_memory().total / (1024**3)
         summary = (
             f"[bold cyan]{info.operating_system}[/bold cyan]  "
-            f"OS {info.os_version}  "
+            f"{info.os_version}  "
             f"Arch [bold]{info.architecture}[/bold]  "
-            f"Package managers: {managers}  "
-            f"Admin: {'yes' if info.administrator else 'no'}  "
+            f"CPU {cpu_count} threads  RAM {memory_gib:.1f} GiB  "
+            f"Managers: {managers}  "
             f"eSim: {info.esim_path or 'not detected'}"
         )
         self.query_one("#header-bar", Static).update(summary)
@@ -191,15 +217,36 @@ class ToolMateApp(App[None]):
         table.clear()
         for entry in entries:
             color = STATUS_COLORS.get(entry.status, "grey62")
+            icon = {
+                "installed": "✔",
+                "missing": "●",
+                "outdated": "▲",
+                "incompatible": "✖",
+                "misconfigured": "▲",
+                "unknown": "●",
+                "failed": "✖",
+            }.get(entry.status, "●")
             table.add_row(
                 entry.name,
-                Text(entry.status.upper(), style=f"bold {color}"),
+                Text(f"{icon} {entry.status.upper()}", style=f"bold {color}"),
                 entry.installed_version or "-",
                 key=entry.id,
             )
         if entries:
             table.move_cursor(row=0)
             self._render_detail(entries[0])
+        elif self.report is not None:
+            self.query_one("#detail", Static).update("No dependencies match this filter.")
+        if self.report is not None:
+            counts = self.report.counts
+            summary = (
+                f"Total {len(self.report.entries)}    "
+                f"[green]✔ Installed {counts.get('installed', 0)}[/green]    "
+                f"[yellow]▲ Outdated {counts.get('outdated', 0)}[/yellow]    "
+                f"[red]● Missing {counts.get('missing', 0)}[/red]    "
+                f"[red]✖ Incompatible {counts.get('incompatible', 0)}[/red]"
+            )
+            self.query_one("#status-strip", Static).update(summary)
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id != "search" or self.report is None:

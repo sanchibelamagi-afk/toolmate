@@ -14,3 +14,8 @@ by both the TUI and CLI.
 Installation is an explicit, approved operation. The TUI confirms the package command,
 streams process output live, reports success or failure, and automatically re-runs the
 environment scan after execution.
+
+The dashboard uses a dark slate palette, rounded titled panes, a system/resource header,
+and a summary strip for total, installed, outdated, missing, and incompatible dependencies.
+Windows package identifiers are sourced from available catalogs; dependencies without
+Winget packages provide a verified Chocolatey or official download fallback when available.
