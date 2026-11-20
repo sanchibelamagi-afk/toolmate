@@ -28,3 +28,25 @@ class DependencyInventoryEntry:
     status: str
     installations: tuple[DetectedInstallation, ...]
     error: str | None = None
+
+
+@dataclass(frozen=True)
+class CompatibilityResult:
+    id: str
+    name: str
+    status: str
+    installed_version: str | None
+    path: Path | None
+    detail: str
+
+
+@dataclass(frozen=True)
+class CompatibilityReport:
+    entries: tuple[CompatibilityResult, ...]
+
+    @property
+    def counts(self) -> Mapping[str, int]:
+        counts: dict[str, int] = {}
+        for entry in self.entries:
+            counts[entry.status] = counts.get(entry.status, 0) + 1
+        return counts

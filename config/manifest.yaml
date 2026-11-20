@@ -5,6 +5,12 @@ dependencies:
     name: Python
     category: runtime
     required: true
+    version:
+      minimum: "3.10"
+      recommended: "3.14"
+      maximum: null
+      excluded: []
+      tested: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     platforms:
       windows:
         supported: true
@@ -31,6 +37,12 @@ dependencies:
     name: Ngspice
     category: simulator
     required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
     platforms:
       windows:
         supported: true
@@ -55,6 +67,12 @@ dependencies:
     name: KiCad
     category: pcb
     required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
     platforms:
       windows:
         supported: true
