@@ -6,7 +6,7 @@
 **Status:** Draft  
 **Product Type:** Desktop Dependency Management Application  
 **Target Platform:** Windows 10/11 and Ubuntu/Debian-based Linux (22.04+)  
-**Proposed GUI Framework:** PyQt5  
+**User Interface:** Textual TUI with Rich rendering  
 **Primary Integration:** eSim EDA Software  
 
 ---
@@ -605,7 +605,7 @@ ToolMate must never bypass integrity checks simply to complete an installation.
 13. Error handling and logs.
 14. Diagnostic report export.
 15. Basic offline scanning.
-16. GUI using PyQt5.
+16. Textual terminal dashboard using Rich rendering.
 
 ### Excluded from MVP
 
@@ -699,9 +699,9 @@ The MVP will be considered successful when:
 - Generate dependency statuses.
 - Implement dependency relationship handling.
 
-### Phase 4: GUI
+### Phase 4: Textual TUI
 
-- Build PyQt5 dashboard.
+- Build Textual terminal dashboard.
 - Display dependency statuses.
 - Add scan and refresh actions.
 - Add dependency detail views.

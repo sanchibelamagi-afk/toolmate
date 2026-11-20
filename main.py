@@ -1,7 +1,7 @@
 import sys
 
 from src.toolmate.diagnostics.logger import configure_logging
-from src.toolmate.gui.main_window import main
+from src.toolmate.tui.app import main
 
 
 if __name__ == "__main__":

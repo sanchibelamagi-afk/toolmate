@@ -1,12 +1,12 @@
 # ToolMate
 
-ToolMate is a modular desktop dependency management application for eSim.
+ToolMate is a modular Terminal UI and CLI dependency management application for eSim.
 
 ## Phase 1
 
 The current implementation detects the operating system, OS version, CPU architecture,
 available package managers, administrator status, eSim installation location, and relevant
-environment variables. It presents this information in a basic PyQt5 window.
+environment variables. It presents this information in a Textual terminal dashboard.
 
 ## Setup
 
