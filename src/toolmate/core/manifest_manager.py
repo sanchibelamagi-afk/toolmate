@@ -28,4 +28,11 @@ class ManifestManager:
             raise ManifestError("Manifest is missing manifest_version")
         if not isinstance(manifest.get("dependencies"), list):
             raise ManifestError("Manifest must contain a dependencies list")
+        for index, dependency in enumerate(manifest["dependencies"]):
+            if not isinstance(dependency, dict):
+                raise ManifestError(f"Dependency at index {index} must be a mapping")
+            if not dependency.get("id") or not dependency.get("name"):
+                raise ManifestError(f"Dependency at index {index} requires id and name")
+            if not isinstance(dependency.get("detection"), dict):
+                raise ManifestError(f"Dependency {dependency['id']} requires detection configuration")
         return manifest

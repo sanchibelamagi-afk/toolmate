@@ -101,25 +101,25 @@ Identify dependencies installed on the system.
 
 ### Features
 
-- Scan dependencies from manifest.
-- Detect executable locations.
-- Detect installed versions.
-- Detect Python packages.
-- Detect multiple installations.
-- Handle failed detection.
+- [x] Scan dependencies from manifest.
+- [x] Detect executable locations.
+- [x] Detect installed versions.
+- [x] Detect Python packages.
+- [x] Detect multiple installations.
+- [x] Handle failed detection.
 
 ### Detection methods
 
-1. Executable search through PATH.
-2. Known installation paths.
-3. Package manager query.
-4. Python package detection.
-5. Registry detection on Windows, where appropriate.
-6. Manifest-defined custom detection.
+1. [x] Executable search through PATH.
+2. [x] Known installation paths.
+3. [x] Package manager query.
+4. [x] Python package detection.
+5. [x] Registry detection on Windows, where appropriate.
+6. [x] Manifest-defined custom detection.
 
 ### Deliverable
 
-A dependency inventory showing name, version, path, and detection result.
+**Status:** [x] A dependency inventory showing name, version, path, and detection result.
 
 ---
 

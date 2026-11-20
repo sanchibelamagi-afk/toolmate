@@ -23,3 +23,9 @@ python main.py
 ```powershell
 python -m pytest tests/unit
 ```
+
+## Dependency inventory
+
+```powershell
+python -c "from src.toolmate.services.scan_service import ScanService; print([(e.id, e.status, len(e.installations)) for e in ScanService('config/manifest.yaml').scan()])"
+```

@@ -12,3 +12,19 @@ class SystemInfo:
     administrator: bool
     esim_path: Path | None
     environment_variables: Mapping[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class DetectedInstallation:
+    version: str | None
+    path: Path | None
+    detection_method: str
+
+
+@dataclass(frozen=True)
+class DependencyInventoryEntry:
+    id: str
+    name: str
+    status: str
+    installations: tuple[DetectedInstallation, ...]
+    error: str | None = None

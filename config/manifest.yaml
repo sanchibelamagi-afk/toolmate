@@ -1,3 +1,76 @@
 manifest_version: 1
 esim_version: "2.x"
-dependencies: []
+dependencies:
+  - id: python
+    name: Python
+    category: runtime
+    required: true
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: all
+      executable: python
+      python_package: pip
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%LOCALAPPDATA%\\Programs\\Python"
+          - "%ProgramFiles%\\Python"
+        linux:
+          - "/usr/bin/python3"
+          - "/usr/local/bin/python3"
+    package_manager:
+      winget: Python.Python.3.14
+      apt: python3
+
+  - id: ngspice
+    name: Ngspice
+    category: simulator
+    required: true
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: ngspice
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\Spice64"
+          - "%ProgramFiles(x86)%\\Spice64"
+        linux:
+          - "/usr/bin/ngspice"
+    package_manager:
+      winget: nullsoft.ngspice
+      apt: ngspice
+
+  - id: kicad
+    name: KiCad
+    category: pcb
+    required: true
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: kicad
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\KiCad"
+          - "%LOCALAPPDATA%\\Programs\\KiCad"
+        linux:
+          - "/usr/bin/kicad"
+    package_manager:
+      winget: KiCad.KiCad
+      apt: kicad
