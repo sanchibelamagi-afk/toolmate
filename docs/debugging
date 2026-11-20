@@ -1,0 +1,22 @@
+Debug this issue:
+
+Expected:
+[What should happen]
+
+Actual:
+[What is happening]
+
+Error:
+[Full error message / traceback]
+
+Code:
+[Relevant code]
+
+Don't guess.
+
+1. Find the root cause.
+2. Explain why it happens.
+3. Provide the smallest possible fix.
+4. Identify what the fix changes.
+5. Tell me exactly how to verify it.
+6. Mention any side effects or risks.

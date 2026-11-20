@@ -1,0 +1,9 @@
+manifest_version:
+  type: integer
+  required: true
+esim_version:
+  type: string
+  required: false
+dependencies:
+  type: list
+  required: true
