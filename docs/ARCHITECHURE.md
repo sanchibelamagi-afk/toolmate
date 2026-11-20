@@ -1,6 +1,6 @@
 ┌─────────────────────────────────────────────┐
 │              TOOLMATE GUI                  │
-│                 PyQt5                      │
+│                 Textual + Rich                      │
 │                                             │
 │  Dashboard │ Dependency Status │ Logs       │
 │  Install   │ Fix All           │ Settings   │

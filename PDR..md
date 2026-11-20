@@ -4,7 +4,7 @@
 **Project:** eSim ToolMate  
 **Document Version:** 0.1  
 **Status:** Draft  
-**Product Type:** Desktop Dependency Management Application  
+**Product Type:** Terminal Dependency Management Application  
 **Target Platform:** Windows 10/11 and Ubuntu/Debian-based Linux (22.04+)  
 **User Interface:** Textual TUI with Rich rendering  
 **Primary Integration:** eSim EDA Software  

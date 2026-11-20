@@ -6,7 +6,7 @@
 **Based on:** ToolMate PDR v0.1  
 **Architecture:** Modular desktop application  
 **Language:** Python 3  
-**GUI:** PyQt5  
+**TUI:** Textual + Rich  
 
 ---
 
@@ -144,21 +144,21 @@ Determine whether detected dependencies meet eSim requirements.
 
 ---
 
-## Phase 4: Dashboard GUI
+## Phase 4: Terminal Dashboard
 
 ### Objective
 Present dependency health clearly.
 
 ### Features
 
-- [x] Main dashboard.
-- [x] Dependency table.
-- [x] Status indicators.
-- [x] System information panel.
-- [x] Scan button.
-- [x] Refresh button.
-- [x] Dependency details.
-- [x] Logs panel.
+- [x] Full-screen Textual dashboard.
+- [x] Searchable/filterable dependency table.
+- [x] Rich status indicators.
+- [x] System information header.
+- [x] Scan keybinding.
+- [x] Refresh keybinding.
+- [x] Dependency details pane.
+- [x] Install confirmation modal.
 
 ### Deliverable
 
@@ -173,15 +173,15 @@ Install missing dependencies safely.
 
 ### Features
 
-- Installation source selection.
-- Package manager integration.
-- Download manager.
-- Checksum verification.
-- Installation planning.
-- User confirmation.
-- Permission handling.
-- Progress display.
-- Cancellation where safe.
+- [x] Installation source selection.
+- [x] Package manager integration.
+- [ ] Download manager.
+- [ ] Checksum verification.
+- [x] Installation planning.
+- [x] User confirmation.
+- [x] Permission handling.
+- [x] Progress display.
+- [ ] Cancellation where safe.
 
 ### Initial installation methods
 
@@ -206,7 +206,7 @@ Install missing dependencies safely.
 
 ### Deliverable
 
-Install at least one dependency successfully through ToolMate on each supported platform.
+**Status:** [x] Installation actions are planned and confirmed in the TUI with live output and post-install re-scan.
 
 ---
 
@@ -558,7 +558,8 @@ Dependencies are divided into three categories:
 
 | Package | Purpose | Required |
 |---|---|---|
-| PyQt5 | Desktop GUI | Yes |
+| Textual | Terminal UI framework | Yes |
+| Rich | Terminal rendering | Yes |
 | PyYAML | YAML manifest parsing | Yes |
 | packaging | Version comparison | Yes |
 | psutil | System information | Recommended |
@@ -594,7 +595,7 @@ We do not need to install these separately.
 | Package | Purpose |
 |---|---|
 | pytest | Testing |
-| pytest-qt | GUI testing |
+| textual.testing | TUI testing support | Yes |
 | pytest-cov | Coverage |
 | Ruff | Linting and formatting |
 | mypy | Type checking |
@@ -620,7 +621,7 @@ They are dependencies that ToolMate installs and manages for eSim.
 | GHDL | VHDL simulation |
 | Verilator | HDL simulation |
 | Python runtime | eSim runtime |
-| PyQt5 | eSim GUI dependency, depending on environment |
+| Textual | TUI dependency, if used as an extension |
 | Matplotlib | Plotting |
 | Watchdog | File monitoring |
 | Hdlparse | HDL parsing |
@@ -636,7 +637,8 @@ The final list, exact package names, and supported versions must be verified fro
 Initial runtime requirements:
 
 ```txt
-PyQt5
+textual
+rich
 PyYAML
 packaging
 psutil
@@ -649,7 +651,8 @@ For the initial development phase, these can be pinned after compatibility testi
 Example future format:
 
 ```txt
-PyQt5==5.15.11
+textual==1.0.0
+rich==13.9.4
 PyYAML==6.0.2
 packaging==25.0
 psutil==7.0.0
@@ -667,7 +670,6 @@ platformdirs==4.3.8
 -r requirements.txt
 
 pytest
-pytest-qt
 pytest-cov
 ruff
 mypy
@@ -731,7 +733,7 @@ Install development dependencies:
 pip install -r requirements-dev.txt
 ```
 
-Some Linux distributions may require system packages for PyQt5 or Python virtual environments. Those requirements should be documented for each supported OS version.
+Some Linux distributions may require system packages for Python virtual environments or terminal rendering support.
 
 ---
 

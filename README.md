@@ -36,5 +36,5 @@ python -c "from src.toolmate.services.scan_service import ScanService; print([(e
 python main.py
 ```
 
-The dashboard shows system information, dependency compatibility, dependency details,
-live scan status, and recent log output.
+The Textual dashboard shows system information, searchable dependency compatibility,
+dependency details, planned commands, and live scan status.

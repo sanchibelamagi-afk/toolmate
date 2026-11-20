@@ -1,0 +1,16 @@
+# ToolMate Product Design Requirements
+
+ToolMate is a cross-platform terminal application for detecting, diagnosing, and preparing
+the dependencies required by eSim.
+
+The user interface uses Textual for the full-screen interactive TUI and Rich for terminal
+formatted output. It provides a system header, searchable dependency pane, compatibility
+status badges, selected-dependency details, and explicit installation confirmation.
+
+The TUI remains separate from system detection, manifest loading, dependency scanning,
+compatibility evaluation, and future installation services. Backend services are reusable
+by both the TUI and CLI.
+
+Installation is an explicit, approved operation. The TUI confirms the package command,
+streams process output live, reports success or failure, and automatically re-runs the
+environment scan after execution.
