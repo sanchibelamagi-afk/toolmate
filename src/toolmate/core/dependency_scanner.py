@@ -4,7 +4,7 @@ import sys
 from typing import Any, Iterable, Mapping
 
 from toolmate.core.models import DependencyInventoryEntry, DetectedInstallation
-from toolmate.detection.executable_detector import detect_executables
+from toolmate.detection.executable_detector import detect_executables, detect_paths
 from toolmate.detection.package_manager_detector import (
     detect_package_managers,
     query_package_version,
@@ -26,6 +26,17 @@ class DependencyScanner:
     def _scan_dependency(self, dependency: Mapping[str, Any]) -> DependencyInventoryEntry:
         dependency_id = str(dependency.get("id", "unknown"))
         name = str(dependency.get("name", dependency_id))
+        platforms = dependency.get("platforms")
+        if isinstance(platforms, Mapping):
+            platform_name = "windows" if sys.platform.startswith("win") else "linux"
+            platform = platforms.get(platform_name)
+            if isinstance(platform, Mapping) and platform.get("supported") is False:
+                return DependencyInventoryEntry(
+                    id=dependency_id,
+                    name=name,
+                    status="unsupported",
+                    installations=(),
+                )
 
         try:
             installations = self._detect_installations(dependency)
@@ -48,7 +59,14 @@ class DependencyScanner:
 
         unique = self._deduplicate_installations(installations)
         if unique and all(installation.version is None for installation in unique):
-            status = "unknown"
+            status = (
+                "installed"
+                if all(
+                    installation.detection_method == "path"
+                    for installation in unique
+                )
+                else "unknown"
+            )
         else:
             status = "installed"
 
@@ -81,6 +99,19 @@ class DependencyScanner:
                         known_paths=known_paths,
                     )
                 )
+
+        if method == "path":
+            paths = self._known_paths({"known_paths": detection.get("paths")})
+            installations.extend(detect_paths(paths))
+
+        if method == "external":
+            installations.append(
+                DetectedInstallation(
+                    version=None,
+                    path=None,
+                    detection_method="external_service",
+                )
+            )
 
         if method in {"python_package", "all"}:
             package_name = detection.get("python_package")

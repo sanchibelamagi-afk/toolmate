@@ -59,6 +59,15 @@ class CompatibilityChecker:
                 path=None,
                 detail="Dependency was not detected.",
             )
+        if entry.status == "unsupported":
+            return CompatibilityResult(
+                id=entry.id,
+                name=entry.name,
+                status="unsupported",
+                installed_version=None,
+                path=None,
+                detail="Dependency is not supported on this platform.",
+            )
         if entry.status == "error":
             return CompatibilityResult(
                 id=entry.id,
@@ -71,6 +80,31 @@ class CompatibilityChecker:
 
         installations = [item for item in entry.installations if item.version is not None]
         if not installations:
+            path_installations = [
+                item for item in entry.installations
+                if item.detection_method == "path" and item.path is not None
+            ]
+            if entry.status == "installed" and path_installations:
+                return CompatibilityResult(
+                    id=entry.id,
+                    name=entry.name,
+                    status="installed",
+                    installed_version=None,
+                    path=path_installations[0].path,
+                    detail="Installation path exists; no version command is available.",
+                )
+            if any(
+                item.detection_method == "external_service"
+                for item in entry.installations
+            ):
+                return CompatibilityResult(
+                    id=entry.id,
+                    name=entry.name,
+                    status="unknown",
+                    installed_version=None,
+                    path=None,
+                    detail="Online service availability cannot be detected locally.",
+                )
             return CompatibilityResult(
                 id=entry.id,
                 name=entry.name,

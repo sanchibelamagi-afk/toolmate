@@ -241,7 +241,8 @@ Improve troubleshooting and failure handling.
 
 ### Features
 
-- Detailed logs.
+- [x] Persistent `logs/toolmate.log` records scans, command previews, installer output,
+  installation outcomes, and errors.
 - Retry policy.
 - Error categorization.
 - Diagnostic report export.
@@ -256,7 +257,46 @@ ToolMate can diagnose and explain common failures.
 
 ---
 
-## Phase 8: eSim Integration
+## Phase 8: Full eSim Toolchain Manifest
+
+### Objective
+Describe and detect the full supported eSim toolchain from the manifest.
+
+### Features
+
+- [x] Include Python, Git, KiCad, Ngspice, GHDL, OpenModelica, Verilator,
+  Icarus Verilog, Makerchip, OpenROAD Flow, SkyWater SKY130 PDK, and IHP PDK.
+- [x] Define version commands for executable-based detection.
+- [x] Detect source checkouts and PDKs by platform-specific paths.
+- [x] Mark Makerchip as an online service that cannot be detected locally.
+- [x] Map known package identifiers to Winget, Chocolatey, APT, and pacman; use
+  official guidance where no supported package exists.
+- [x] Keep platform support explicit for Linux-only flows and PDKs.
+
+### Deliverable
+
+**Status:** [x] Manifest-driven inventory for all 12 tools.
+
+## Phase 9: Safe Mode Dry-Run Toggle
+
+### Objective
+Let users inspect planned installation commands without making system changes.
+
+### Features
+
+- [x] Toggle Safe Mode with `[m]` and show its state in the header and footer.
+- [x] Preview the selected dependency's command when `[i]` is pressed in Safe Mode.
+- [x] Preview eligible batch commands when `[b]` is pressed in Safe Mode.
+- [x] Log each Safe Mode preview to `logs/toolmate.log` without executing it.
+- [x] Guard confirmation callbacks against execution if Safe Mode becomes active.
+
+### Deliverable
+
+**Status:** [x] Safe Mode dry-run behavior for single and batch installs.
+
+---
+
+## Phase 10: eSim Integration
 
 ### Objective
 Connect ToolMate with the eSim application.
@@ -275,7 +315,7 @@ ToolMate accessible through eSim and independently.
 
 ---
 
-## Phase 9: Packaging and Release
+## Phase 11: Packaging and Release
 
 ### Objective
 Create distributable builds.
@@ -347,6 +387,7 @@ toolmate/
 │       │   ├── __init__.py
 │       │   ├── base_installer.py
 │       │   ├── apt_installer.py
+│       │   ├── pacman_installer.py
 │       │   ├── winget_installer.py
 │       │   ├── chocolatey_installer.py
 │       │   ├── pip_installer.py
@@ -492,6 +533,7 @@ Create files in this order.
 | `services/install_service.py` | Installation orchestration |
 | `installers/base_installer.py` | Installer interface |
 | `installers/apt_installer.py` | APT |
+| `installers/pacman_installer.py` | pacman |
 | `installers/winget_installer.py` | Winget |
 | `installers/pip_installer.py` | Pip |
 | `installers/download_installer.py` | Verified downloads |

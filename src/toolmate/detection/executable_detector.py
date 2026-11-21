@@ -51,6 +51,20 @@ def detect_executables(
     return list(found.values())
 
 
+def detect_paths(paths: Iterable[str]) -> list[DetectedInstallation]:
+    found: dict[Path, DetectedInstallation] = {}
+    for value in paths:
+        candidate = _expand_path(value).expanduser()
+        if candidate.is_dir():
+            path = candidate.resolve()
+            found[path] = DetectedInstallation(
+                version=None,
+                path=path,
+                detection_method="path",
+            )
+    return list(found.values())
+
+
 def _find_executable_in_directory(directory: Path, executable: str) -> list[Path]:
     matches: list[Path] = []
     names = {executable, f"{executable}.exe", f"{executable}.cmd"}

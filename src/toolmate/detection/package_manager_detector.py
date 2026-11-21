@@ -14,7 +14,7 @@ def query_package_version(manager: str, package: str) -> str | None:
         "apt-get": ["apt-cache", "policy", package],
         "dnf": ["dnf", "info", "-q", package],
         "yum": ["yum", "info", "-q", package],
-        "pacman": ["pacman", "-Si", package],
+        "pacman": ["pacman", "-Qi", package],
         "choco": ["choco", "list", "--exact", "--local-only", package],
         "winget": ["winget", "list", "--id", package, "--exact", "--accept-source-agreements"],
     }
@@ -51,4 +51,7 @@ def query_package_version(manager: str, package: str) -> str | None:
         match = re.search(r"\b([^\s]+)\s+([0-9][0-9A-Za-z.+_-]*(?:\.[0-9A-Za-z.+_-]+)*)\s*$",
                           output, re.MULTILINE)
         return match.group(2) if match else None
+    if manager == "pacman":
+        match = re.search(r"^Version\s*:\s*(\S+)", output, re.MULTILINE)
+        return match.group(1) if match else None
     return output

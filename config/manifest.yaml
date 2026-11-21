@@ -32,6 +32,7 @@ dependencies:
     package_manager:
       winget: Python.Python.3.14
       apt: python3
+      pacman: python
 
   - id: ngspice
     name: Ngspice
@@ -62,6 +63,7 @@ dependencies:
     package_manager:
       apt: ngspice
       choco: ngspice
+      pacman: ngspice
     installation:
       manual_url: https://ngspice.sourceforge.io/download.html
       notes: >-
@@ -86,15 +88,299 @@ dependencies:
         supported: true
     detection:
       method: executable
-      executable: kicad
+      executable: kicad-cli
       version_args:
-        - "--version"
+        - "version"
       known_paths:
         windows:
           - "%ProgramFiles%\\KiCad"
           - "%LOCALAPPDATA%\\Programs\\KiCad"
         linux:
-          - "/usr/bin/kicad"
+          - "/usr/bin/kicad-cli"
     package_manager:
       winget: KiCad.KiCad
       apt: kicad
+      pacman: kicad
+    installation:
+      manual_url: https://www.kicad.org/download/
+
+  - id: git
+    name: Git
+    category: version_control
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: git
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\Git\\cmd\\git.exe"
+        linux:
+          - "/usr/bin/git"
+    package_manager:
+      winget: Git.Git
+      choco: git
+      apt: git
+      pacman: git
+    installation:
+      manual_url: https://git-scm.com/downloads
+
+  - id: ghdl
+    name: GHDL
+    category: hdl_simulator
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: ghdl
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\GHDL\\bin\\ghdl.exe"
+        linux:
+          - "/usr/bin/ghdl"
+    package_manager:
+      winget: ghdl.ghdl.ucrt64.mcode
+      apt: ghdl
+    installation:
+      manual_url: https://ghdl.github.io/ghdl/
+      notes: >-
+        The Winget package provides the MSYS2 ucrt64 mcode build. No supported
+        Chocolatey or pacman package was verified.
+
+  - id: openmodelica
+    name: OpenModelica
+    category: simulator
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: omc
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\OpenModelica\\bin\\omc.exe"
+        linux:
+          - "/usr/bin/omc"
+    package_manager:
+      winget: OpenModelica.OpenModelica.Official
+      apt: openmodelica
+    installation:
+      manual_url: https://openmodelica.org/download/
+      notes: >-
+        Linux APT installations require the official OpenModelica package
+        repository to be configured first.
+
+  - id: verilator
+    name: Verilator
+    category: hdl_simulator
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: verilator
+      version_args:
+        - "--version"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\Verilator\\bin\\verilator.exe"
+        linux:
+          - "/usr/bin/verilator"
+    package_manager:
+      apt: verilator
+      pacman: verilator
+    installation:
+      manual_url: https://verilator.org/guide/latest/install.html
+      notes: >-
+        No default Winget or Chocolatey package was verified. Windows users
+        can use the official MSYS2 or source-build instructions.
+
+  - id: iverilog
+    name: Icarus Verilog
+    category: hdl_simulator
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: executable
+      executable: iverilog
+      version_args:
+        - "-V"
+      known_paths:
+        windows:
+          - "%ProgramFiles%\\Icarus Verilog\\bin\\iverilog.exe"
+        linux:
+          - "/usr/bin/iverilog"
+    package_manager:
+      winget: Icarus.Verilog
+      choco: iverilog
+      apt: iverilog
+      pacman: iverilog
+    installation:
+      manual_url: https://steveicarus.github.io/iverilog/
+
+  - id: makerchip
+    name: Makerchip
+    category: online_tool
+    required: false
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: true
+      linux:
+        supported: true
+    detection:
+      method: external
+      url: https://makerchip.com/
+    installation:
+      manual_url: https://makerchip.com/
+      notes: >-
+        Makerchip is a browser-based service and has no local executable or
+        package-manager installation to detect.
+
+  - id: openroad_flow
+    name: OpenROAD Flow
+    category: physical_design
+    required: true
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: false
+      linux:
+        supported: true
+    detection:
+      method: path
+      paths:
+        windows:
+          - "%OPENROAD_FLOW_HOME%"
+          - "%USERPROFILE%\\OpenROAD-flow-scripts"
+        linux:
+          - "${OPENROAD_FLOW_HOME}"
+          - "$HOME/OpenROAD-flow-scripts"
+          - "/opt/OpenROAD-flow-scripts"
+    installation:
+      manual_url: https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
+      notes: >-
+        OpenROAD Flow Scripts is a source checkout with tool and PDK
+        prerequisites; it is not distributed as a standalone package.
+
+  - id: skywater_sky130_pdk
+    name: SkyWater SKY130 PDK
+    category: pdk
+    required: false
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: false
+      linux:
+        supported: true
+    detection:
+      method: path
+      paths:
+        windows: []
+        linux:
+          - "${PDK_ROOT}/sky130A"
+          - "/usr/share/pdk/sky130A"
+          - "/opt/pdk/sky130A"
+    installation:
+      manual_url: https://github.com/google/skywater-pdk
+      notes: >-
+        Configure PDK_ROOT to the installation root. No supported default
+        Winget, Chocolatey, APT, or pacman package was verified.
+
+  - id: ihp_pdk
+    name: IHP PDK
+    category: pdk
+    required: false
+    version:
+      minimum: null
+      recommended: null
+      maximum: null
+      excluded: []
+      tested: []
+    platforms:
+      windows:
+        supported: false
+      linux:
+        supported: true
+    detection:
+      method: path
+      paths:
+        windows: []
+        linux:
+          - "${PDK_ROOT}/ihp-sg13g2"
+          - "/usr/share/pdk/ihp-sg13g2"
+          - "/opt/pdk/ihp-sg13g2"
+    installation:
+      manual_url: https://github.com/IHP-GmbH/IHP-Open-PDK
+      notes: >-
+        Configure PDK_ROOT to the installation root. No supported default
+        Winget, Chocolatey, APT, or pacman package was verified.

@@ -10,6 +10,7 @@ from toolmate.installers.apt_installer import AptInstaller
 from toolmate.installers.base_installer import InstallationResult
 from toolmate.installers.chocolatey_installer import ChocolateyInstaller
 from toolmate.installers.download_installer import DownloadInstaller
+from toolmate.installers.pacman_installer import PacmanInstaller
 from toolmate.installers.winget_installer import WingetInstaller
 
 
@@ -35,7 +36,12 @@ class InstallService:
                 return command, f"winget package {package_id}"
             if manager == "choco":
                 return ("choco", "install", package_id, "-y"), f"Chocolatey package {package_id}"
-            return ("apt-get", "install", "-y", package_id), f"APT package {package_id}"
+            if manager == "pacman":
+                return (
+                    tuple(PacmanInstaller.command_for(package_id)),
+                    f"pacman package {package_id}",
+                )
+            return tuple(AptInstaller.command_for(package_id)), f"APT package {package_id}"
         installation = dependency.get("installation")
         download = installation.get("download") if isinstance(installation, Mapping) else None
         if isinstance(download, Mapping):
@@ -64,8 +70,11 @@ class InstallService:
                 return "winget", str(package_manager["winget"])
             if shutil.which("choco") and package_manager.get("choco"):
                 return "choco", str(package_manager["choco"])
-        if shutil.which("apt") and package_manager.get("apt"):
-            return "apt", str(package_manager["apt"])
+        if sys.platform.startswith("linux"):
+            if shutil.which("apt") and package_manager.get("apt"):
+                return "apt", str(package_manager["apt"])
+            if shutil.which("pacman") and package_manager.get("pacman"):
+                return "pacman", str(package_manager["pacman"])
         return None
 
     def execute(
@@ -86,6 +95,8 @@ class InstallService:
                 return WingetInstaller().install(package_id, on_output, cancel_event)
             if manager == "choco":
                 return ChocolateyInstaller().install(package_id, on_output, cancel_event)
+            if manager == "pacman":
+                return PacmanInstaller().install(package_id, on_output, cancel_event)
             return AptInstaller().install(
                 package_id, on_output, cancel_event
             )

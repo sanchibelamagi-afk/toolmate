@@ -1,8 +1,14 @@
 import asyncio
+import logging
 
 from toolmate.core.models import CompatibilityReport, CompatibilityResult
 from toolmate.installers.base_installer import InstallationResult
-from toolmate.tui.app import InstallAllConfirmScreen, InstallConfirmScreen, ToolMateApp
+from toolmate.tui.app import (
+    InstallAllConfirmScreen,
+    InstallConfirmScreen,
+    SafeModePreviewScreen,
+    ToolMateApp,
+)
 
 
 def test_textual_app_smoke(monkeypatch):
@@ -172,7 +178,7 @@ def test_install_all_missing_shortcut_shows_eligible_missing_commands(monkeypatc
     asyncio.run(smoke())
 
 
-def test_batch_installation_continues_after_an_item_fails(monkeypatch):
+def test_batch_installation_continues_after_an_item_fails(monkeypatch, caplog):
     entries = (
         CompatibilityResult(
             id="fails",
@@ -220,6 +226,8 @@ def test_batch_installation_continues_after_an_item_fails(monkeypatch):
         executed.append((dependency_id, approved))
         if dependency_id == "fails":
             raise RuntimeError("package manager failed")
+        if on_output is not None:
+            on_output("installer output")
         return InstallationResult(
             command=("apt-get", "install", dependency_id),
             exit_code=0,
@@ -236,4 +244,137 @@ def test_batch_installation_continues_after_an_item_fails(monkeypatch):
             assert not app.install_in_progress
             assert app.active_install_cancel is None
 
+    with caplog.at_level(logging.INFO, logger="toolmate"):
+        asyncio.run(smoke())
+
+    assert "Environment scan completed" in caplog.text
+    assert "Batch installer output: installer output" in caplog.text
+    assert "Batch installation failed for fails" in caplog.text
+
+
+def test_safe_mode_toggle_updates_header_and_footer(monkeypatch):
+    monkeypatch.setattr(
+        "toolmate.tui.app.detect_system_info",
+        lambda: type(
+            "SystemInfo",
+            (),
+            {
+                "operating_system": "Linux",
+                "os_version": "Test OS",
+                "architecture": "x86_64",
+                "package_managers": ("apt",),
+                "administrator": False,
+                "esim_path": None,
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=()),
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            assert not app.safe_mode
+            app.install_in_progress = True
+            await pilot.press("m")
+            await pilot.pause()
+            assert not app.safe_mode
+
+            app.install_in_progress = False
+            await pilot.press("m")
+            await pilot.pause()
+
+            assert app.safe_mode
+            assert "SAFE MODE: ON" in str(
+                app.query_one("#header-bar").renderable
+            )
+            assert "Safe Mode: ON" in str(app.query_one("#keys").renderable)
+
     asyncio.run(smoke())
+
+
+def test_safe_mode_previews_single_and_batch_without_execution(monkeypatch, caplog):
+    entries = (
+        CompatibilityResult(
+            id="git",
+            name="Git",
+            status="missing",
+            installed_version=None,
+            path=None,
+            detail="Not detected.",
+        ),
+        CompatibilityResult(
+            id="ghdl",
+            name="GHDL",
+            status="missing",
+            installed_version=None,
+            path=None,
+            detail="Not detected.",
+        ),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.detect_system_info",
+        lambda: type(
+            "SystemInfo",
+            (),
+            {
+                "operating_system": "Linux",
+                "os_version": "Test OS",
+                "architecture": "x86_64",
+                "package_managers": ("apt",),
+                "administrator": False,
+                "esim_path": None,
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=entries),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.InstallService.can_install_automatically",
+        lambda self, dependency_id: True,
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.ToolMateApp._planned_command",
+        lambda self, entry: f"install {entry.id}",
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.InstallService.execute",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("Safe Mode must not execute installation commands")
+        ),
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            app.selected_id = "git"
+            await pilot.press("m")
+            await pilot.press("i")
+            await pilot.pause()
+
+            assert isinstance(app.screen, SafeModePreviewScreen)
+            assert app.screen.items == (("Git", "install git"),)
+            assert not app.install_in_progress
+            app.screen.dismiss(None)
+            await pilot.pause()
+
+            await pilot.press("b")
+            await pilot.pause()
+            assert isinstance(app.screen, SafeModePreviewScreen)
+            assert app.screen.items == (
+                ("Git", "install git"),
+                ("GHDL", "install ghdl"),
+            )
+            assert not app.install_in_progress
+
+    with caplog.at_level(logging.INFO, logger="toolmate"):
+        asyncio.run(smoke())
+
+    assert "Safe Mode install preview for git: install git" in caplog.text
+    assert "Safe Mode batch install command preview for ghdl: install ghdl" in caplog.text
