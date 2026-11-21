@@ -19,19 +19,23 @@ class InstallService:
 
     def plan(self, dependency_id: str) -> tuple[tuple[str, ...], str]:
         dependency = self._dependency(dependency_id)
-        package_manager = dependency.get("package_manager")
-        if not isinstance(package_manager, Mapping):
-            package_manager = {}
-
-        if sys.platform.startswith("win"):
-            if shutil.which("winget") and package_manager.get("winget"):
-                command = ("winget", "install", "--id", str(package_manager["winget"]), "--exact", "--accept-package-agreements", "--accept-source-agreements")
-                return command, f"winget package {package_manager['winget']}"
-            if shutil.which("choco") and package_manager.get("choco"):
-                command = ("choco", "install", str(package_manager["choco"]), "-y")
-                return command, f"Chocolatey package {package_manager['choco']}"
-        if shutil.which("apt") and package_manager.get("apt"):
-            return ("apt-get", "install", "-y", str(package_manager["apt"])), f"APT package {package_manager['apt']}"
+        package_manager = self._package_manager_install(dependency)
+        if package_manager is not None:
+            manager, package_id = package_manager
+            if manager == "winget":
+                command = (
+                    "winget",
+                    "install",
+                    "--id",
+                    package_id,
+                    "--exact",
+                    "--accept-package-agreements",
+                    "--accept-source-agreements",
+                )
+                return command, f"winget package {package_id}"
+            if manager == "choco":
+                return ("choco", "install", package_id, "-y"), f"Chocolatey package {package_id}"
+            return ("apt-get", "install", "-y", package_id), f"APT package {package_id}"
         installation = dependency.get("installation")
         download = installation.get("download") if isinstance(installation, Mapping) else None
         if isinstance(download, Mapping):
@@ -44,6 +48,26 @@ class InstallService:
             return (f"Manual download: {manual_url}",), "Manual installation guidance"
         return (), "No supported installation source is configured for this platform"
 
+    def can_install_automatically(self, dependency_id: str) -> bool:
+        return self._package_manager_install(self._dependency(dependency_id)) is not None
+
+    @staticmethod
+    def _package_manager_install(
+        dependency: Mapping[str, Any],
+    ) -> tuple[str, str] | None:
+        package_manager = dependency.get("package_manager")
+        if not isinstance(package_manager, Mapping):
+            package_manager = {}
+
+        if sys.platform.startswith("win"):
+            if shutil.which("winget") and package_manager.get("winget"):
+                return "winget", str(package_manager["winget"])
+            if shutil.which("choco") and package_manager.get("choco"):
+                return "choco", str(package_manager["choco"])
+        if shutil.which("apt") and package_manager.get("apt"):
+            return "apt", str(package_manager["apt"])
+        return None
+
     def execute(
         self,
         dependency_id: str,
@@ -55,22 +79,15 @@ class InstallService:
             raise PermissionError("Installation requires explicit user approval.")
 
         dependency = self._dependency(dependency_id)
-        package_manager = dependency.get("package_manager")
-        if not isinstance(package_manager, Mapping):
-            package_manager = {}
-
-        if sys.platform.startswith("win"):
-            if shutil.which("winget") and package_manager.get("winget"):
-                return WingetInstaller().install(
-                    str(package_manager["winget"]), on_output, cancel_event
-                )
-            if shutil.which("choco") and package_manager.get("choco"):
-                return ChocolateyInstaller().install(
-                    str(package_manager["choco"]), on_output, cancel_event
-                )
-        if shutil.which("apt") and package_manager.get("apt"):
+        package_manager = self._package_manager_install(dependency)
+        if package_manager is not None:
+            manager, package_id = package_manager
+            if manager == "winget":
+                return WingetInstaller().install(package_id, on_output, cancel_event)
+            if manager == "choco":
+                return ChocolateyInstaller().install(package_id, on_output, cancel_event)
             return AptInstaller().install(
-                str(package_manager["apt"]), on_output, cancel_event
+                package_id, on_output, cancel_event
             )
 
         installation = dependency.get("installation")

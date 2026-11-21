@@ -5,7 +5,7 @@ import psutil
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import (
     Button,
@@ -45,6 +45,34 @@ class InstallConfirmScreen(ModalScreen[bool]):
             yield Static(f"[bold]Install {self.dependency_name}[/bold]")
             yield Static(Text(self.command, style="bold cyan"), id="confirm-command")
             yield Static("No command will execute automatically.")
+            with Horizontal(id="confirm-actions"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Confirm", id="confirm", variant="success")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "confirm")
+
+
+class InstallAllConfirmScreen(ModalScreen[bool]):
+    def __init__(
+        self,
+        items: tuple[tuple[CompatibilityResult, str], ...],
+    ) -> None:
+        super().__init__()
+        self.items = items
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="batch-confirm-dialog"):
+            yield Static(
+                f"[bold]Install {len(self.items)} missing dependencies?[/bold]"
+            )
+            yield Static(
+                "Only dependencies with supported automated package managers are included."
+            )
+            yield Static("Review the planned commands before approving the batch.")
+            with VerticalScroll(id="batch-plan"):
+                for entry, command in self.items:
+                    yield Static(f"[bold]{entry.name}[/bold]\n{command}")
             with Horizontal(id="confirm-actions"):
                 yield Button("Cancel", id="cancel")
                 yield Button("Confirm", id="confirm", variant="success")
@@ -136,11 +164,27 @@ class ToolMateApp(App[None]):
         height: 3;
         align-horizontal: right;
     }
+    #batch-confirm-dialog {
+        width: 90;
+        height: 24;
+        margin: 2 4;
+        padding: 1 2;
+        border: thick #7aa2f7;
+        background: #24283b;
+    }
+    #batch-plan {
+        height: 1fr;
+        margin: 1 0;
+        padding: 0 1;
+        border: round #414868;
+        background: #1a1b26;
+    }
     """
 
     BINDINGS = [
         Binding("s", "scan", "[s] Scan"),
         Binding("i", "install", "[i] Install"),
+        Binding("b", "install_all_missing", "[b] Install All Missing"),
         Binding("x", "cancel_install", "[x] Cancel install"),
         Binding("slash", "filter", "[/] Filter"),
         Binding("q", "quit", "[q] Quit"),
@@ -153,6 +197,7 @@ class ToolMateApp(App[None]):
         self.entries = []
         self.selected_id: str | None = None
         self.active_install_cancel: Event | None = None
+        self.install_in_progress = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -170,7 +215,7 @@ class ToolMateApp(App[None]):
                 yield Static("Select a dependency.", id="detail")
                 yield RichLog(id="install-output", wrap=True, highlight=True)
         yield Static(
-            "s Scan   i Install   x Cancel   / Filter   q Quit",
+            "s Scan   i Install   b Install All Missing   x Cancel   / Filter   q Quit",
             id="keys",
         )
         yield Footer()
@@ -181,6 +226,7 @@ class ToolMateApp(App[None]):
         self.query_one("#list-pane", Vertical).border_title = "Dependencies"
         self.query_one("#detail-pane", Vertical).border_title = "Package Details"
         self.query_one("#install-output", RichLog).border_title = "Install Output"
+        self.query_one("#dependency-table", DataTable).focus()
         await self.action_scan()
 
     async def action_scan(self) -> None:
@@ -323,6 +369,9 @@ class ToolMateApp(App[None]):
         if not self.report:
             self.notify("Run a scan before installation.", severity="warning")
             return
+        if self.install_in_progress:
+            self.notify("An installation is already running.", severity="warning")
+            return
         if self.selected_id is None:
             self.notify("Select a dependency.", severity="warning")
             return
@@ -337,13 +386,51 @@ class ToolMateApp(App[None]):
             callback=lambda approved: self._on_install_confirmation(entry, approved),
         )
 
+    def action_install_all_missing(self) -> None:
+        if self.report is None:
+            self.notify("Run a scan before installation.", severity="warning")
+            return
+        if self.install_in_progress:
+            self.notify("An installation is already running.", severity="warning")
+            return
+
+        service = InstallService(self.manifest_path)
+        items = tuple(
+            (entry, self._planned_command(entry))
+            for entry in self.report.entries
+            if entry.status == "missing"
+            and service.can_install_automatically(entry.id)
+        )
+        if not items:
+            self.notify(
+                "No missing dependencies have a supported automated installer.",
+                severity="warning",
+            )
+            return
+        self.push_screen(
+            InstallAllConfirmScreen(items),
+            callback=lambda approved: self._on_batch_install_confirmation(
+                tuple(entry for entry, _ in items), approved
+            ),
+        )
+
     def _on_install_confirmation(
         self,
         entry: CompatibilityResult,
         approved: bool | None,
     ) -> None:
-        if approved:
+        if approved and not self.install_in_progress:
+            self.install_in_progress = True
             self.run_worker(self._run_installation(entry))
+
+    def _on_batch_install_confirmation(
+        self,
+        entries: tuple[CompatibilityResult, ...],
+        approved: bool | None,
+    ) -> None:
+        if approved and not self.install_in_progress:
+            self.install_in_progress = True
+            self.run_worker(self._run_batch_installations(entries))
 
     async def _run_installation(self, entry: CompatibilityResult) -> None:
         output = self.query_one("#install-output", RichLog)
@@ -370,6 +457,7 @@ class ToolMateApp(App[None]):
             return
         finally:
             self.active_install_cancel = None
+            self.install_in_progress = False
 
         if result.cancelled:
             output.write("Operation cancelled.")
@@ -381,6 +469,76 @@ class ToolMateApp(App[None]):
             output.write(f"Installation exited with code {result.exit_code}.")
             self.notify("Installation completed with errors", severity="warning")
 
+        await self.action_scan()
+
+    async def _run_batch_installations(
+        self,
+        entries: tuple[CompatibilityResult, ...],
+    ) -> None:
+        output = self.query_one("#install-output", RichLog)
+        output.clear()
+        service = InstallService(self.manifest_path)
+        cancel_event = Event()
+        self.active_install_cancel = cancel_event
+        succeeded = 0
+        failed = 0
+        cancelled = False
+
+        def stream_output(line: str) -> None:
+            self.call_from_thread(output.write, line)
+
+        try:
+            for entry in entries:
+                if cancel_event.is_set():
+                    cancelled = True
+                    output.write("Cancellation requested; remaining installs were skipped.")
+                    break
+
+                command = self._planned_command(entry)
+                output.write(f"Starting installation for {entry.name}: {command}")
+                try:
+                    result = await asyncio.to_thread(
+                        service.execute,
+                        entry.id,
+                        True,
+                        stream_output,
+                        cancel_event,
+                    )
+                except Exception as exc:
+                    failed += 1
+                    output.write(f"{entry.name} failed: {exc}")
+                    continue
+
+                if result.cancelled:
+                    cancelled = True
+                    output.write(f"{entry.name} installation was cancelled.")
+                    break
+                if result.succeeded:
+                    succeeded += 1
+                    output.write(f"{entry.name} installation completed.")
+                else:
+                    failed += 1
+                    output.write(
+                        f"{entry.name} installation exited with code "
+                        f"{result.exit_code}."
+                    )
+        finally:
+            self.active_install_cancel = None
+            self.install_in_progress = False
+
+        output.write(
+            f"Batch finished: {succeeded} succeeded, {failed} failed, "
+            f"{len(entries) - succeeded - failed} not completed."
+        )
+        if cancelled:
+            self.notify("Batch installation cancelled.", severity="warning")
+        elif failed:
+            self.notify(
+                f"Batch finished: {succeeded} succeeded, {failed} failed.",
+                severity="warning",
+            )
+        else:
+            self.notify(f"Installed {succeeded} dependencies.")
         await self.action_scan()
 
     def action_cancel_install(self) -> None:

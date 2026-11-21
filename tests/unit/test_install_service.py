@@ -31,3 +31,19 @@ def test_install_requires_explicit_approval(tmp_path):
     except PermissionError:
         return
     raise AssertionError("Installation was not blocked without approval")
+
+
+def test_automatic_installability_uses_available_platform_package_manager(monkeypatch):
+    service = InstallService("config/manifest.yaml")
+    monkeypatch.setattr("toolmate.services.install_service.sys.platform", "win32")
+    monkeypatch.setattr(
+        "toolmate.services.install_service.shutil.which",
+        lambda command: command == "choco",
+    )
+
+    assert service.can_install_automatically("ngspice")
+    assert not service.can_install_automatically("python")
+    assert service.plan("ngspice") == (
+        ("choco", "install", "ngspice", "-y"),
+        "Chocolatey package ngspice",
+    )

@@ -220,19 +220,17 @@ Resolve multiple dependency problems through a single controlled workflow.
 
 ### Features
 
-- Identify eligible dependencies.
-- Build installation plan.
-- Resolve installation order.
-- Show summary.
-- Request approval.
-- Execute operations.
-- Continue safely after independent failures.
-- Verify each result.
-- Generate final report.
+- [x] Identify missing dependencies with supported automated package managers.
+- [x] Build and show a per-dependency installation plan.
+- [x] Execute the approved plan sequentially.
+- [x] Request one explicit approval for the entire batch.
+- [x] Continue after independent failures and report each outcome.
+- [x] Stop starting operations after cancellation.
+- [x] Re-scan the environment and show a final batch summary.
 
 ### Deliverable
 
-Functional Fix All workflow.
+**Status:** [x] Functional `[b] Install All Missing` workflow.
 
 ---
 

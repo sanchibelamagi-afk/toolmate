@@ -172,13 +172,12 @@ ToolMate must display the intended installation action and request user approval
 A single **Fix All** action should:
 
 1. Scan the environment.
-2. Identify dependencies that can be fixed automatically.
-3. Display a summary of planned changes.
-4. Request user approval.
-5. Execute approved operations in a controlled sequence.
-6. Skip dependencies that fail when safe to continue.
-7. Verify the resulting environment.
-8. Display a final report.
+2. Identify missing dependencies with a supported automated package manager.
+3. Display each planned command and request approval for the entire batch.
+4. Execute approved operations in a controlled sequence.
+5. Continue after an individual failure when subsequent operations are independent.
+6. Stop starting new operations when the user requests cancellation.
+7. Re-scan the environment and display a final summary.
 
 Fix All must never execute silently.
 
@@ -275,11 +274,13 @@ As a user, I want to fix all detected dependency problems with one action so tha
 
 **Acceptance criteria:**
 
-- Fix All summarizes planned changes.
-- User confirms the entire plan.
-- Dependencies are processed in a safe order.
-- Independent operations can continue after a failure.
-- Final status is provided for each operation.
+- The `[b] Install All Missing` action includes only missing dependencies with an
+  automated package-manager route available on the current platform.
+- A confirmation screen lists the planned commands before any operation runs.
+- The user confirms or cancels the entire batch.
+- Independent operations continue after a failure, and each outcome is reported.
+- Cancellation prevents remaining operations from starting.
+- The environment is re-scanned and a final summary is shown.
 
 ### US-06: Configuration validation
 

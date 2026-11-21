@@ -12,6 +12,7 @@
 │                                             │
 │  Scan Manager                              │
 │  Installation Manager                       │
+│  Fix All Workflow                            │
 │  Compatibility Manager                       │
 │  Verification Manager                       │
 │  Diagnostic Manager                          │
@@ -52,6 +53,10 @@ Dependencies, Package Details, and Install Output. The dependency list is search
 and the status strip summarizes total, installed, outdated, missing, and incompatible
 items. System detection, scanning, compatibility, and installation remain in backend
 services; TUI widgets only display results, request confirmation, and invoke services.
+The `[b] Install All Missing` action uses the installation service to plan eligible
+missing dependencies, presents every command for one explicit approval, then executes
+the batch sequentially. An individual failure is reported without blocking later
+independent operations, and a final scan verifies the resulting environment.
 
 The installable Python package uses the `src/toolmate` package layout and exposes
 `toolmate.cli:main` through the `toolmate` console script. Manifest-declared downloads
