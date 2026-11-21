@@ -23,3 +23,6 @@ toolmate = "toolmate.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.data-files]
+"share/toolmate/config" = ["config/manifest.yaml"]

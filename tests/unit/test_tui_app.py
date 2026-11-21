@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from toolmate.core.models import CompatibilityReport, CompatibilityResult
+from toolmate.core.models import CompatibilityReport, CompatibilityResult, SystemInfo
 from toolmate.installers.base_installer import InstallationResult
 from toolmate.tui.app import (
     InstallAllConfirmScreen,
@@ -378,3 +378,25 @@ def test_safe_mode_previews_single_and_batch_without_execution(monkeypatch, capl
 
     assert "Safe Mode install preview for git: install git" in caplog.text
     assert "Safe Mode batch install command preview for ghdl: install ghdl" in caplog.text
+
+
+def test_tui_accepts_esim_path_from_integration_launcher(monkeypatch, tmp_path):
+    system_info = SystemInfo(
+        operating_system="Linux",
+        os_version="Test OS",
+        architecture="x86_64",
+        package_managers=(),
+        administrator=False,
+        esim_path=None,
+    )
+    monkeypatch.setattr("toolmate.tui.app.detect_system_info", lambda: system_info)
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=()),
+    )
+    esim_path = tmp_path / "esim"
+    esim_path.mkdir()
+
+    info, _ = ToolMateApp(esim_path=esim_path)._scan()
+
+    assert info.esim_path == esim_path

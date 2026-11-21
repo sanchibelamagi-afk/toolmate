@@ -1,5 +1,6 @@
 README.md
 pyproject.toml
+config/manifest.yaml
 src/toolmate/__init__.py
 src/toolmate/cli.py
 src/toolmate.egg-info/PKG-INFO
@@ -28,8 +29,11 @@ src/toolmate/installers/apt_installer.py
 src/toolmate/installers/base_installer.py
 src/toolmate/installers/chocolatey_installer.py
 src/toolmate/installers/download_installer.py
+src/toolmate/installers/pacman_installer.py
 src/toolmate/installers/pip_installer.py
 src/toolmate/installers/winget_installer.py
+src/toolmate/integration/__init__.py
+src/toolmate/integration/esim.py
 src/toolmate/platform/__init__.py
 src/toolmate/platform/linux.py
 src/toolmate/platform/paths.py

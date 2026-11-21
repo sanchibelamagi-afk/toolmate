@@ -1,0 +1,54 @@
+name: CI and packages
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install project and development tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Run Ruff
+        run: ruff check main.py src tests
+
+  package:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: python -m pip install -r requirements-dev.txt
+      - name: Build wheel and source distribution
+        run: python -m build --outdir dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toolmate-${{ runner.os }}-dist
+          path: dist/*
+          if-no-files-found: error

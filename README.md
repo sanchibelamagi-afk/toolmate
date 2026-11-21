@@ -81,6 +81,68 @@ Tools without a verified package mapping provide official setup guidance in the 
 Makerchip availability cannot be detected locally; it is reported as an external service,
 not as a missing executable.
 
+## eSim integration
+
+Launch ToolMate from an eSim menu or launcher while passing the eSim installation
+directory:
+
+```powershell
+toolmate --esim-path "C:\Program Files\eSim"
+```
+
+```bash
+toolmate --esim-path "$HOME/esim"
+```
+
+For a non-interactive compatibility report, eSim can invoke:
+
+```powershell
+toolmate --check-dependencies --esim-path "C:\Program Files\eSim" `
+  --dependency-path "ngspice=C:\tools\ngspice\bin\ngspice.exe"
+```
+
+```bash
+toolmate --check-dependencies --esim-path "$HOME/esim" \
+  --dependency-path "ngspice=/usr/bin/ngspice"
+```
+
+The command writes a JSON report to stdout with system information, dependency
+compatibility, detected executable paths, eSim-root validation, and any supplied
+eSim-configured dependency-path checks. Repeat `--dependency-path ID=PATH` for each
+configured tool. A missing configured path is reported as `exists: false`; an unknown
+dependency ID or invalid explicit eSim root returns a JSON error and nonzero exit code.
+
+An eSim-side **Check Dependencies** menu item can call this command and parse stdout,
+while a **Launch ToolMate** item can run `toolmate --esim-path <eSim-directory>`. This
+repository provides the integration interface; the eSim application source itself is
+maintained separately.
+
+## Packaging and releases
+
+The package version in `pyproject.toml` is the release version source. Build a wheel and
+source archive locally with:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m build --outdir dist
+```
+
+The GitHub Actions workflow runs tests and Ruff on Windows and Linux, then builds
+installable wheel and source-distribution artifacts on both operating systems. Install a
+downloaded wheel with `python -m pip install <wheel-file>`; its declared dependencies are
+installed by pip. For a release, set the version in `pyproject.toml`, create the matching
+`v<version>` tag, and attach the workflow's build artifacts to the GitHub release.
+
+## Screenshot and demo
+
+For a readable capture, use a terminal at least 120 columns wide and 40 rows high, run
+`toolmate`, wait for the scan to finish, and show the dependency table with Safe Mode
+visible. On Windows, use **Win+Shift+S** to capture the terminal. On Linux, use the
+desktop's screenshot shortcut or screenshot utility to capture the terminal window.
+For a short demo, record the terminal with your desktop's screen recorder (or a terminal
+recorder such as `asciinema` where available), then demonstrate `s` to rescan, `m` to
+toggle Safe Mode, `i` for a selected-tool preview, and `b` for a batch preview.
+
 ## Tests and lint
 
 ```powershell

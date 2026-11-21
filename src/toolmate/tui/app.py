@@ -1,4 +1,6 @@
 import asyncio
+from dataclasses import replace
+from pathlib import Path
 from threading import Event
 
 import psutil
@@ -232,9 +234,14 @@ class ToolMateApp(App[None]):
         Binding("q", "quit", "[q] Quit"),
     ]
 
-    def __init__(self, manifest_path: str = "config/manifest.yaml") -> None:
+    def __init__(
+        self,
+        manifest_path: str = "config/manifest.yaml",
+        esim_path: Path | None = None,
+    ) -> None:
         super().__init__()
         self.manifest_path = manifest_path
+        self.esim_path = esim_path
         self.logger = configure_logging()
         self.report: CompatibilityReport | None = None
         self.entries = []
@@ -297,6 +304,8 @@ class ToolMateApp(App[None]):
 
     def _scan(self) -> tuple[SystemInfo, CompatibilityReport]:
         info = detect_system_info()
+        if self.esim_path is not None:
+            info = replace(info, esim_path=self.esim_path)
         report = ScanService(self.manifest_path).evaluate()
         return info, report
 

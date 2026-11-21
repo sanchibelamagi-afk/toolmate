@@ -70,3 +70,10 @@ The installable Python package uses the `src/toolmate` package layout and expose
 must use HTTPS and a configured SHA-256 digest; downloaded artifacts are verified before
 being made available and are not launched automatically. Active package processes and
 downloads accept cooperative cancellation where supported.
+The eSim adapter exposes a non-interactive JSON compatibility report and accepts an
+explicit eSim root plus configured dependency paths. The eSim application can launch the
+TUI or bind its Check Dependencies menu item to those CLI options without coupling eSim
+code to ToolMate internals.
+Setuptools installs the canonical manifest under `share/toolmate/config` for wheel
+installations; source checkouts continue to load `config/manifest.yaml`. GitHub Actions
+runs tests and Ruff on Windows and Linux and builds wheel/source artifacts on both.

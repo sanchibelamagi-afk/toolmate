@@ -303,15 +303,17 @@ Connect ToolMate with the eSim application.
 
 ### Features
 
-- Detect eSim configuration.
-- Validate eSim dependency paths.
-- Launch ToolMate from eSim.
-- Add Check Dependencies entry.
-- Share compatibility information.
+- [x] Use detected or explicit `--esim-path` roots and validate explicit roots.
+- [x] Accept eSim-configured dependency paths and report whether each exists.
+- [x] Launch the TUI with the eSim root through the `toolmate --esim-path` entry point.
+- [x] Provide `--check-dependencies` as a JSON hook for an eSim Check Dependencies menu
+  item.
+- [x] Share compatibility counts, statuses, versions, and paths through the JSON report.
 
 ### Deliverable
 
-ToolMate accessible through eSim and independently.
+**Status:** [x] eSim launch and JSON integration interface. The eSim UI is maintained in
+a separate repository; README documents the command to bind to its menu.
 
 ---
 
@@ -322,16 +324,16 @@ Create distributable builds.
 
 ### Features
 
-- Windows packaging.
-- Linux packaging.
-- Automated tests.
-- Build pipeline.
-- Versioning.
-- Release documentation.
+- [x] Build wheel and source-distribution artifacts on Windows and Linux.
+- [x] Run automated tests and Ruff on Windows and Linux.
+- [x] Build artifacts in GitHub Actions.
+- [x] Use the `pyproject.toml` project version as the release version source.
+- [x] Document package installation, release tagging, and artifact publication.
+- [x] Document screenshot and demo capture steps.
 
 ### Deliverable
 
-Installable or distributable MVP builds.
+**Status:** [x] Cross-platform package artifacts and release workflow.
 
 ---
 
@@ -347,7 +349,11 @@ toolmate/
 ├── LICENSE
 ├── requirements.txt
 ├── requirements-dev.txt
+├── pyproject.toml
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 │
 ├── docs/
 │   ├── PDR.md
@@ -364,6 +370,10 @@ toolmate/
 ├── src/
 │   └── toolmate/
 │       ├── __init__.py
+│       ├── cli.py
+│       ├── integration/
+│       │   ├── __init__.py
+│       │   └── esim.py
 │       │
 │       ├── core/
 │       │   ├── __init__.py
