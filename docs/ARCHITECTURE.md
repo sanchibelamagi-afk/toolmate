@@ -86,3 +86,7 @@ runs tests and Ruff on Windows, Linux, and macOS and builds wheel/source artifac
 each platform. The macOS platform adapter detects Homebrew and eSim roots; package
 installation, version queries, update checks, and upgrades use Homebrew when a formula
 is present in the manifest.
+The Windows PyInstaller spec builds a console-mode one-file executable and embeds the
+canonical manifest at `config/manifest.yaml`. Frozen builds resolve this resource from
+PyInstaller's extraction directory, so the application does not require a separate
+Python installation or a working-directory-relative manifest.

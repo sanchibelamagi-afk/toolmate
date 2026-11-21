@@ -330,10 +330,12 @@ Create distributable builds.
 - [x] Use the `pyproject.toml` project version as the release version source.
 - [x] Document package installation, release tagging, and artifact publication.
 - [x] Document screenshot and demo capture steps.
+- [x] Build a standalone Windows PyInstaller executable with the manifest bundled.
 
 ### Deliverable
 
-**Status:** [x] Cross-platform package artifacts and release workflow.
+**Status:** [x] Cross-platform package artifacts, release workflow, and standalone Windows
+executable.
 
 ## Phase 12: Update/Upgrade System, Environment/PATH Configuration & Homebrew Adapter
 

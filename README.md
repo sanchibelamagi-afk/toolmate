@@ -158,6 +158,21 @@ downloaded wheel with `python -m pip install <wheel-file>`; its declared depende
 installed by pip. For a release, set the version in `pyproject.toml`, create the matching
 `v<version>` tag, and attach the workflow's build artifacts to the GitHub release.
 
+### Standalone Windows executable
+
+On Windows, install the development requirements and build the console app as a
+self-contained, one-file executable. The PyInstaller spec bundles the canonical manifest:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m PyInstaller --clean --noconfirm toolmate.spec
+.\dist\toolmate.exe --check-dependencies
+```
+
+The executable includes its Python runtime and dependencies; target PCs do not need
+Python installed. The build writes `dist\toolmate.exe`, while PyInstaller's temporary
+files go into `build\`. Both output directories are ignored by Git.
+
 ## Screenshot and demo
 
 For a readable capture, use a terminal at least 120 columns wide and 40 rows high, run

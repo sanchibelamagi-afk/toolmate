@@ -32,6 +32,20 @@ def test_get_manifest_path_finds_packaged_data_file(monkeypatch, tmp_path):
     assert get_manifest_path() == manifest_path
 
 
+def test_get_manifest_path_finds_pyinstaller_bundle_data(monkeypatch, tmp_path):
+    manifest_path = tmp_path / "config" / "manifest.yaml"
+    manifest_path.parent.mkdir()
+    manifest_path.write_text("manifest_version: 1\ndependencies: []\n", encoding="utf-8")
+    monkeypatch.setattr(cli.sys, "_MEIPASS", str(tmp_path), raising=False)
+    monkeypatch.setattr(
+        cli,
+        "__file__",
+        str(tmp_path / "bundle" / "toolmate" / "cli.py"),
+    )
+
+    assert get_manifest_path() == manifest_path
+
+
 def test_check_dependencies_command_emits_json(monkeypatch, capsys, tmp_path):
     esim_root = tmp_path / "esim"
     esim_root.mkdir()

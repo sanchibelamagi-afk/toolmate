@@ -10,9 +10,15 @@ from toolmate.tui.app import ToolMateApp
 
 def get_manifest_path() -> Path:
     project_root = Path(__file__).resolve().parents[2]
-    candidates = (
-        project_root / "config" / "manifest.yaml",
-        Path(sys.prefix) / "share" / "toolmate" / "config" / "manifest.yaml",
+    candidates = []
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if isinstance(bundle_root, str):
+        candidates.append(Path(bundle_root) / "config" / "manifest.yaml")
+    candidates.extend(
+        (
+            project_root / "config" / "manifest.yaml",
+            Path(sys.prefix) / "share" / "toolmate" / "config" / "manifest.yaml",
+        )
     )
     for manifest_path in candidates:
         if manifest_path.is_file():
