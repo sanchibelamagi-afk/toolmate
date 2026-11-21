@@ -34,12 +34,11 @@
 ┌─────────────────────────────────────────────┐
 │          PLATFORM ABSTRACTION              │
 │                                             │
-│ Windows              Linux                  │
-│ Winget               APT                    │
-│ Chocolatey            pacman                │
-│                      Pip                    │
-│ Windows Paths         Linux Paths           │
-│ UAC                   Sudo                   │
+│ Windows       Linux       macOS             │
+│ Winget        APT         Homebrew           │
+│ Chocolatey    pacman      Pip / POSIX profile│
+│ User PATH     Linux paths macOS paths        │
+│ UAC           Sudo        User environment   │
 └──────────────────────┬──────────────────────┘
                        │
                        ▼
@@ -64,6 +63,13 @@ The versioned manifest defines the 12-tool eSim environment, including executabl
 path-based, and external-service detection. Safe Mode is owned by the TUI as a
 presentation/runtime guard: it displays and logs the installation plan but never calls
 an installer until Safe Mode is switched off and the user approves a plan.
+The update service queries the platform package manager for available versions and
+executes only a user-confirmed upgrade. The environment configuration service builds
+the exact proposed user PATH and `ESIM_HOME` changes, rejects profiles changed since
+preview, and creates a backup before writing. Windows changes are limited to the
+current user's Environment registry key; Linux uses `~/.profile`, and macOS uses
+`~/.zprofile`. TUI widgets display these plans and confirmations but do not modify
+the environment or invoke package-manager commands directly.
 
 The installable Python package uses the `src/toolmate` package layout and exposes
 `toolmate.cli:main` through the `toolmate` console script. Manifest-declared downloads
@@ -76,4 +82,7 @@ TUI or bind its Check Dependencies menu item to those CLI options without coupli
 code to ToolMate internals.
 Setuptools installs the canonical manifest under `share/toolmate/config` for wheel
 installations; source checkouts continue to load `config/manifest.yaml`. GitHub Actions
-runs tests and Ruff on Windows and Linux and builds wheel/source artifacts on both.
+runs tests and Ruff on Windows, Linux, and macOS and builds wheel/source artifacts on
+each platform. The macOS platform adapter detects Homebrew and eSim roots; package
+installation, version queries, update checks, and upgrades use Homebrew when a formula
+is present in the manifest.

@@ -38,6 +38,7 @@ class CompatibilityResult:
     installed_version: str | None
     path: Path | None
     detail: str
+    available_version: str | None = None
 
 
 @dataclass(frozen=True)

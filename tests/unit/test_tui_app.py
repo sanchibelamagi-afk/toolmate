@@ -4,11 +4,14 @@ import logging
 from toolmate.core.models import CompatibilityReport, CompatibilityResult, SystemInfo
 from toolmate.installers.base_installer import InstallationResult
 from toolmate.tui.app import (
+    EnvironmentConfirmScreen,
     InstallAllConfirmScreen,
     InstallConfirmScreen,
     SafeModePreviewScreen,
     ToolMateApp,
+    UpdateConfirmScreen,
 )
+from toolmate.services.environment_service import EnvironmentPlan
 
 
 def test_textual_app_smoke(monkeypatch):
@@ -378,6 +381,220 @@ def test_safe_mode_previews_single_and_batch_without_execution(monkeypatch, capl
 
     assert "Safe Mode install preview for git: install git" in caplog.text
     assert "Safe Mode batch install command preview for ghdl: install ghdl" in caplog.text
+
+
+def test_safe_mode_update_checks_and_previews_without_execution(monkeypatch):
+    entry = CompatibilityResult(
+        id="git",
+        name="Git",
+        status="installed",
+        installed_version="2.54",
+        path=None,
+        detail="Installed.",
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.detect_system_info",
+        lambda: SystemInfo(
+            operating_system="macOS",
+            os_version="Test OS",
+            architecture="arm64",
+            package_managers=("brew",),
+            administrator=False,
+            esim_path=None,
+        ),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=(entry,)),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.check_available",
+        lambda self: {"git": "2.55"},
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.plan",
+        lambda self, dependency_id: (("brew", "upgrade", "git"), "Homebrew package git"),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.execute",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("Safe Mode must not execute updates")
+        ),
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            app.selected_id = "git"
+            await pilot.press("m")
+            await pilot.press("u")
+            await pilot.pause()
+
+            assert isinstance(app.screen, SafeModePreviewScreen)
+            assert app.entries[0].available_version == "2.55"
+            assert app.screen.items == (
+                ("Git", "brew upgrade git  [Homebrew package git]"),
+            )
+            app.screen.dismiss(None)
+            await pilot.pause()
+            row = app.query_one("#dependency-table").get_row_at(0)
+            assert "UPDATE AVAILABLE" in str(row[1])
+            assert "2.55" in str(row[2])
+
+    asyncio.run(smoke())
+
+
+def test_update_action_requires_confirmation_when_safe_mode_is_off(monkeypatch):
+    entry = CompatibilityResult(
+        id="git",
+        name="Git",
+        status="installed",
+        installed_version="2.54",
+        path=None,
+        detail="Installed.",
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.detect_system_info",
+        lambda: SystemInfo(
+            operating_system="macOS",
+            os_version="Test OS",
+            architecture="arm64",
+            package_managers=("brew",),
+            administrator=False,
+            esim_path=None,
+        ),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=(entry,)),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.check_available",
+        lambda self: {"git": "2.55"},
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.plan",
+        lambda self, dependency_id: (("brew", "upgrade", "git"), "Homebrew package git"),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.UpdateService.execute",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("Safe Mode must block a confirmed update")
+        ),
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            app.selected_id = "git"
+            await pilot.press("u")
+            await pilot.pause()
+            assert isinstance(app.screen, UpdateConfirmScreen)
+            assert app.screen.command == "brew upgrade git  [Homebrew package git]"
+            app.safe_mode = True
+            app.screen.dismiss(True)
+            await pilot.pause()
+            assert not app.install_in_progress
+
+    asyncio.run(smoke())
+
+
+def test_safe_mode_environment_action_previews_without_modifying_profile(monkeypatch):
+    system_info = SystemInfo(
+        operating_system="Linux",
+        os_version="Test OS",
+        architecture="x86_64",
+        package_managers=("apt",),
+        administrator=False,
+        esim_path=None,
+    )
+    plan = EnvironmentPlan(
+        target="/home/test/.profile",
+        esim_home="/home/test/esim",
+        path_entries=("/home/test/esim/bin",),
+        path_value=None,
+        profile_contents=(
+            "# >>> ToolMate environment >>>\n"
+            "export ESIM_HOME=/home/test/esim\n"
+            'export PATH=/home/test/esim/bin:"$PATH"\n'
+            "# <<< ToolMate environment <<<\n"
+        ),
+        original_path=None,
+        original_esim_home=None,
+        original_profile=b"",
+    )
+    monkeypatch.setattr("toolmate.tui.app.detect_system_info", lambda: system_info)
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=()),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.EnvironmentConfigurationService.plan",
+        lambda self, info, entries: plan,
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.EnvironmentConfigurationService.apply",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("Safe Mode must not modify the environment")
+        ),
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            await pilot.press("m")
+            await pilot.press("c")
+            await pilot.pause()
+            assert isinstance(app.screen, SafeModePreviewScreen)
+            assert "export ESIM_HOME=/home/test/esim" in app.screen.items[0][1]
+            assert not app.install_in_progress
+
+    asyncio.run(smoke())
+
+
+def test_environment_action_opens_confirmation_when_safe_mode_is_off(monkeypatch):
+    system_info = SystemInfo(
+        operating_system="Linux",
+        os_version="Test OS",
+        architecture="x86_64",
+        package_managers=("apt",),
+        administrator=False,
+        esim_path=None,
+    )
+    plan = EnvironmentPlan(
+        target="/home/test/.profile",
+        esim_home=None,
+        path_entries=("/home/test/bin",),
+        path_value=None,
+        profile_contents="# >>> ToolMate environment >>>\n# <<< ToolMate environment <<<\n",
+        original_path=None,
+        original_esim_home=None,
+        original_profile=b"",
+    )
+    monkeypatch.setattr("toolmate.tui.app.detect_system_info", lambda: system_info)
+    monkeypatch.setattr(
+        "toolmate.tui.app.ScanService.evaluate",
+        lambda self: CompatibilityReport(entries=()),
+    )
+    monkeypatch.setattr(
+        "toolmate.tui.app.EnvironmentConfigurationService.plan",
+        lambda self, info, entries: plan,
+    )
+
+    async def smoke():
+        app = ToolMateApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            await pilot.press("c")
+            await pilot.pause()
+            assert isinstance(app.screen, EnvironmentConfirmScreen)
+            assert app.screen.plan == plan
+            app.screen.dismiss(False)
+
+    asyncio.run(smoke())
 
 
 def test_tui_accepts_esim_path_from_integration_launcher(monkeypatch, tmp_path):

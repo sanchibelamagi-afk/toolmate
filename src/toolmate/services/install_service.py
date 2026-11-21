@@ -10,6 +10,7 @@ from toolmate.installers.apt_installer import AptInstaller
 from toolmate.installers.base_installer import InstallationResult
 from toolmate.installers.chocolatey_installer import ChocolateyInstaller
 from toolmate.installers.download_installer import DownloadInstaller
+from toolmate.installers.homebrew_installer import HomebrewInstaller
 from toolmate.installers.pacman_installer import PacmanInstaller
 from toolmate.installers.winget_installer import WingetInstaller
 
@@ -41,6 +42,8 @@ class InstallService:
                     tuple(PacmanInstaller.command_for(package_id)),
                     f"pacman package {package_id}",
                 )
+            if manager == "brew":
+                return ("brew", "install", package_id), f"Homebrew package {package_id}"
             return tuple(AptInstaller.command_for(package_id)), f"APT package {package_id}"
         installation = dependency.get("installation")
         download = installation.get("download") if isinstance(installation, Mapping) else None
@@ -75,6 +78,9 @@ class InstallService:
                 return "apt", str(package_manager["apt"])
             if shutil.which("pacman") and package_manager.get("pacman"):
                 return "pacman", str(package_manager["pacman"])
+        if sys.platform == "darwin":
+            if shutil.which("brew") and package_manager.get("brew"):
+                return "brew", str(package_manager["brew"])
         return None
 
     def execute(
@@ -97,6 +103,8 @@ class InstallService:
                 return ChocolateyInstaller().install(package_id, on_output, cancel_event)
             if manager == "pacman":
                 return PacmanInstaller().install(package_id, on_output, cancel_event)
+            if manager == "brew":
+                return HomebrewInstaller().install(package_id, on_output, cancel_event)
             return AptInstaller().install(
                 package_id, on_output, cancel_event
             )

@@ -32,3 +32,24 @@ def test_pacman_queries_installed_package_version(monkeypatch):
 
     assert query_package_version("pacman", "verilator") == "5.0.1-1"
     assert commands == [["pacman", "-Qi", "verilator"]]
+
+
+def test_homebrew_queries_installed_package_version(monkeypatch):
+    commands = []
+
+    def run(command, **kwargs):
+        commands.append(command)
+        return type(
+            "CompletedProcess",
+            (),
+            {
+                "returncode": 0,
+                "stdout": "git 2.45.0\n",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr("toolmate.detection.package_manager_detector.subprocess.run", run)
+
+    assert query_package_version("brew", "git") == "2.45.0"
+    assert commands == [["brew", "list", "--versions", "git"]]

@@ -14,3 +14,7 @@ def common_esim_paths() -> list[Path]:
         Path("/opt/eSim"),
         Path("/usr/local/eSim"),
     ]
+
+
+def user_profile_path() -> Path:
+    return Path.home() / ".profile"

@@ -16,6 +16,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: all
       executable: python
@@ -29,10 +31,14 @@ dependencies:
         linux:
           - "/usr/bin/python3"
           - "/usr/local/bin/python3"
+        macos:
+          - "/opt/homebrew/bin/python3"
+          - "/usr/local/bin/python3"
     package_manager:
       winget: Python.Python.3.14
       apt: python3
       pacman: python
+      brew: python@3.14
 
   - id: ngspice
     name: Ngspice
@@ -49,6 +55,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: ngspice
@@ -60,10 +68,14 @@ dependencies:
           - "%ProgramFiles(x86)%\\Spice64"
         linux:
           - "/usr/bin/ngspice"
+        macos:
+          - "/opt/homebrew/bin/ngspice"
+          - "/usr/local/bin/ngspice"
     package_manager:
       apt: ngspice
       choco: ngspice
       pacman: ngspice
+      brew: ngspice
     installation:
       manual_url: https://ngspice.sourceforge.io/download.html
       notes: >-
@@ -86,6 +98,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: kicad-cli
@@ -97,6 +111,8 @@ dependencies:
           - "%LOCALAPPDATA%\\Programs\\KiCad"
         linux:
           - "/usr/bin/kicad-cli"
+        macos:
+          - "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
     package_manager:
       winget: KiCad.KiCad
       apt: kicad
@@ -119,6 +135,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: git
@@ -129,11 +147,16 @@ dependencies:
           - "%ProgramFiles%\\Git\\cmd\\git.exe"
         linux:
           - "/usr/bin/git"
+        macos:
+          - "/usr/bin/git"
+          - "/opt/homebrew/bin/git"
+          - "/usr/local/bin/git"
     package_manager:
       winget: Git.Git
       choco: git
       apt: git
       pacman: git
+      brew: git
     installation:
       manual_url: https://git-scm.com/downloads
 
@@ -152,6 +175,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: ghdl
@@ -162,6 +187,9 @@ dependencies:
           - "%ProgramFiles%\\GHDL\\bin\\ghdl.exe"
         linux:
           - "/usr/bin/ghdl"
+        macos:
+          - "/opt/homebrew/bin/ghdl"
+          - "/usr/local/bin/ghdl"
     package_manager:
       winget: ghdl.ghdl.ucrt64.mcode
       apt: ghdl
@@ -169,7 +197,7 @@ dependencies:
       manual_url: https://ghdl.github.io/ghdl/
       notes: >-
         The Winget package provides the MSYS2 ucrt64 mcode build. No supported
-        Chocolatey or pacman package was verified.
+        Chocolatey, pacman, or Homebrew package was verified.
 
   - id: openmodelica
     name: OpenModelica
@@ -186,6 +214,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: omc
@@ -196,6 +226,8 @@ dependencies:
           - "%ProgramFiles%\\OpenModelica\\bin\\omc.exe"
         linux:
           - "/usr/bin/omc"
+        macos:
+          - "/Applications/OpenModelica.app/Contents/MacOS/omc"
     package_manager:
       winget: OpenModelica.OpenModelica.Official
       apt: openmodelica
@@ -220,6 +252,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: verilator
@@ -230,9 +264,13 @@ dependencies:
           - "%ProgramFiles%\\Verilator\\bin\\verilator.exe"
         linux:
           - "/usr/bin/verilator"
+        macos:
+          - "/opt/homebrew/bin/verilator"
+          - "/usr/local/bin/verilator"
     package_manager:
       apt: verilator
       pacman: verilator
+      brew: verilator
     installation:
       manual_url: https://verilator.org/guide/latest/install.html
       notes: >-
@@ -254,6 +292,8 @@ dependencies:
         supported: true
       linux:
         supported: true
+      macos:
+        supported: true
     detection:
       method: executable
       executable: iverilog
@@ -264,11 +304,15 @@ dependencies:
           - "%ProgramFiles%\\Icarus Verilog\\bin\\iverilog.exe"
         linux:
           - "/usr/bin/iverilog"
+        macos:
+          - "/opt/homebrew/bin/iverilog"
+          - "/usr/local/bin/iverilog"
     package_manager:
       winget: Icarus.Verilog
       choco: iverilog
       apt: iverilog
       pacman: iverilog
+      brew: icarus-verilog
     installation:
       manual_url: https://steveicarus.github.io/iverilog/
 
@@ -286,6 +330,8 @@ dependencies:
       windows:
         supported: true
       linux:
+        supported: true
+      macos:
         supported: true
     detection:
       method: external
@@ -311,6 +357,8 @@ dependencies:
         supported: false
       linux:
         supported: true
+      macos:
+        supported: false
     detection:
       method: path
       paths:
@@ -342,6 +390,8 @@ dependencies:
         supported: false
       linux:
         supported: true
+      macos:
+        supported: false
     detection:
       method: path
       paths:
@@ -371,6 +421,8 @@ dependencies:
         supported: false
       linux:
         supported: true
+      macos:
+        supported: false
     detection:
       method: path
       paths:

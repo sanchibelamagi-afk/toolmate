@@ -8,7 +8,7 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.screen import ModalScreen
+from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
     DataTable,
@@ -22,8 +22,13 @@ from textual.widgets import (
 from toolmate.core.models import CompatibilityReport, CompatibilityResult, SystemInfo
 from toolmate.core.system_detector import detect_system_info
 from toolmate.diagnostics.logger import configure_logging
+from toolmate.services.environment_service import (
+    EnvironmentConfigurationService,
+    EnvironmentPlan,
+)
 from toolmate.services.scan_service import ScanService
 from toolmate.services.install_service import InstallService
+from toolmate.services.update_service import UpdateService
 
 
 STATUS_COLORS = {
@@ -49,6 +54,46 @@ class InstallConfirmScreen(ModalScreen[bool]):
             yield Static(f"[bold]Install {self.dependency_name}[/bold]")
             yield Static(Text(self.command, style="bold cyan"), id="confirm-command")
             yield Static("No command will execute automatically.")
+            with Horizontal(id="confirm-actions"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Confirm", id="confirm", variant="success")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "confirm")
+
+
+class UpdateConfirmScreen(ModalScreen[bool]):
+    def __init__(self, name: str, command: str) -> None:
+        super().__init__()
+        self.dependency_name = name
+        self.command = command
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="confirm-dialog"):
+            yield Static(f"[bold]Update {self.dependency_name}[/bold]")
+            yield Static(Text(self.command, style="bold cyan"), id="confirm-command")
+            yield Static("No command will execute automatically.")
+            with Horizontal(id="confirm-actions"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Confirm", id="confirm", variant="success")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "confirm")
+
+
+class EnvironmentConfirmScreen(ModalScreen[bool]):
+    def __init__(self, plan: EnvironmentPlan) -> None:
+        super().__init__()
+        self.plan = plan
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="environment-confirm-dialog"):
+            yield Static("[bold]Configure user environment[/bold]")
+            yield Static(
+                "A backup will be created before the profile or User PATH is modified."
+            )
+            with VerticalScroll(id="environment-plan"):
+                yield Static(Text(self.plan.preview(), style="cyan"))
             with Horizontal(id="confirm-actions"):
                 yield Button("Cancel", id="cancel")
                 yield Button("Confirm", id="confirm", variant="success")
@@ -182,6 +227,21 @@ class ToolMateApp(App[None]):
         border: thick #7aa2f7;
         background: #24283b;
     }
+    #environment-confirm-dialog {
+        width: 90;
+        height: 28;
+        margin: 1 4;
+        padding: 1 2;
+        border: thick #7aa2f7;
+        background: #24283b;
+    }
+    #environment-plan {
+        height: 1fr;
+        margin: 1 0;
+        padding: 0 1;
+        border: round #414868;
+        background: #1a1b26;
+    }
     #confirm-command {
         height: 3;
         margin: 1 0;
@@ -227,9 +287,11 @@ class ToolMateApp(App[None]):
     BINDINGS = [
         Binding("s", "scan", "[s] Scan"),
         Binding("i", "install", "[i] Install"),
+        Binding("u", "update", "[u] Update"),
         Binding("b", "install_all_missing", "[b] Install All Missing"),
+        Binding("c", "configure_environment", "[c] Configure Env"),
         Binding("m", "toggle_safe_mode", "[m] Safe Mode"),
-        Binding("x", "cancel_install", "[x] Cancel install"),
+        Binding("x", "cancel_install", "[x] Cancel operation"),
         Binding("slash", "filter", "[/] Filter"),
         Binding("q", "quit", "[q] Quit"),
     ]
@@ -267,8 +329,9 @@ class ToolMateApp(App[None]):
                 yield Static("Select a dependency.", id="detail")
                 yield RichLog(id="install-output", wrap=True, highlight=True)
         yield Static(
-            "s Scan   i Install   b Install All Missing   m Safe Mode: OFF   "
-            "x Cancel   / Filter   q Quit",
+            "s Scan   i Install   u Update   b Install All Missing   "
+            "c Configure Env   m Safe Mode: OFF   "
+            "x Cancel operation   / Filter   q Quit",
             id="keys",
         )
         yield Footer()
@@ -309,6 +372,9 @@ class ToolMateApp(App[None]):
         report = ScanService(self.manifest_path).evaluate()
         return info, report
 
+    def _main_screen(self) -> Screen[None]:
+        return self.screen_stack[0]
+
     def _render_header(self, info: SystemInfo) -> None:
         self.system_info = info
         managers = ", ".join(info.package_managers) if info.package_managers else "None"
@@ -323,7 +389,7 @@ class ToolMateApp(App[None]):
             f"eSim: {info.esim_path or 'not detected'}  "
             f"[bold yellow]SAFE MODE: {'ON' if self.safe_mode else 'OFF'}[/bold yellow]"
         )
-        self.query_one("#header-bar", Static).update(summary)
+        self._main_screen().query_one("#header-bar", Static).update(summary)
 
     def action_toggle_safe_mode(self) -> None:
         if not self.safe_mode and self.install_in_progress:
@@ -338,22 +404,33 @@ class ToolMateApp(App[None]):
             self._render_header(self.system_info)
         else:
             state = "ON" if self.safe_mode else "OFF"
-            self.query_one("#header-bar", Static).update(
+            self._main_screen().query_one("#header-bar", Static).update(
                 f"[bold yellow]SAFE MODE: {state}[/bold yellow]"
             )
         state = "ON" if self.safe_mode else "OFF"
-        self.query_one("#keys", Static).update(
-            "s Scan   i Install   b Install All Missing   "
-            f"m Safe Mode: {state}   x Cancel   / Filter   q Quit"
+        self._main_screen().query_one("#keys", Static).update(
+            "s Scan   i Install   u Update   b Install All Missing   "
+            "c Configure Env   "
+            f"m Safe Mode: {state}   x Cancel operation   / Filter   q Quit"
         )
         self.logger.info("Safe Mode toggled %s.", state)
         self.notify(f"Safe Mode {state}")
 
     def _render_table(self, entries) -> None:
-        table = self.query_one("#dependency-table", DataTable)
+        main_screen = self._main_screen()
+        table = main_screen.query_one("#dependency-table", DataTable)
         table.clear()
         for entry in entries:
-            color = STATUS_COLORS.get(entry.status, "grey62")
+            display_status = (
+                "UPDATE AVAILABLE"
+                if entry.available_version
+                else entry.status.upper()
+            )
+            color = (
+                "yellow"
+                if entry.available_version
+                else STATUS_COLORS.get(entry.status, "grey62")
+            )
             icon = {
                 "installed": "✔",
                 "missing": "●",
@@ -366,25 +443,38 @@ class ToolMateApp(App[None]):
             }.get(entry.status, "●")
             table.add_row(
                 entry.name,
-                Text(f"{icon} {entry.status.upper()}", style=f"bold {color}"),
-                entry.installed_version or "-",
+                Text(f"{icon} {display_status}", style=f"bold {color}"),
+                (
+                    f"{entry.installed_version or '?'} → {entry.available_version}"
+                    if entry.available_version
+                    else entry.installed_version or "-"
+                ),
                 key=entry.id,
             )
         if entries:
-            table.move_cursor(row=0)
-            self._render_detail(entries[0])
+            selected_row = next(
+                (index for index, entry in enumerate(entries) if entry.id == self.selected_id),
+                0,
+            )
+            table.move_cursor(row=selected_row)
+            self.selected_id = entries[selected_row].id
+            self._render_detail(entries[selected_row])
         elif self.report is not None:
-            self.query_one("#detail", Static).update("No dependencies match this filter.")
+            main_screen.query_one("#detail", Static).update(
+                "No dependencies match this filter."
+            )
         if self.report is not None:
             counts = self.report.counts
             summary = (
                 f"Total {len(self.report.entries)}    "
                 f"[green]✔ Installed {counts.get('installed', 0)}[/green]    "
                 f"[yellow]▲ Outdated {counts.get('outdated', 0)}[/yellow]    "
+                f"[yellow]↑ Updates "
+                f"{sum(bool(entry.available_version) for entry in self.report.entries)}[/yellow]    "
                 f"[red]● Missing {counts.get('missing', 0)}[/red]    "
                 f"[red]✖ Incompatible {counts.get('incompatible', 0)}[/red]"
             )
-            self.query_one("#status-strip", Static).update(summary)
+            main_screen.query_one("#status-strip", Static).update(summary)
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id != "search" or self.report is None:
@@ -392,16 +482,26 @@ class ToolMateApp(App[None]):
         query = event.value.strip().lower()
         filtered = [
             entry for entry in self.entries
-            if not query or query in f"{entry.name} {entry.status} {entry.detail}".lower()
+            if not query
+            or query
+            in (
+                f"{entry.name} {entry.status} {entry.detail} "
+                f"{'update available' if entry.available_version else ''} "
+                f"{entry.available_version or ''}"
+            ).lower()
         ]
         self._render_table(filtered)
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if isinstance(self.screen, ModalScreen):
+            return
         key = getattr(event.row_key, "value", None)
         self.selected_id = key
         self._show_entry(key)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        if isinstance(self.screen, ModalScreen):
+            return
         key = getattr(event.row_key, "value", None)
         self.selected_id = key
         self._show_entry(key)
@@ -423,13 +523,14 @@ class ToolMateApp(App[None]):
             f"Status: [{color}]{entry.status.upper()}[/{color}]\n"
             f"Detected: {entry.installed_version or 'Unknown'}\n"
             f"Install path: {path}\n\n"
+            f"Available update: {entry.available_version or 'Not checked'}\n\n"
             "[bold]Compatibility Constraints[/bold]\n"
             f"{constraints}\n\n"
             "[bold]Planned Install / Fix[/bold]\n"
             f"[cyan]{command}[/cyan]\n\n"
             f"[bold]Detail[/bold]\n{entry.detail}"
         )
-        self.query_one("#detail", Static).update(content)
+        self._main_screen().query_one("#detail", Static).update(content)
 
     def _constraints(self, dependency_id: str) -> str:
         manifest = ScanService(self.manifest_path)
@@ -451,8 +552,108 @@ class ToolMateApp(App[None]):
         command, source = InstallService(self.manifest_path).plan(entry.id)
         return f"{' '.join(command)}  [{source}]"
 
+    def _planned_update_command(self, entry: CompatibilityResult) -> str:
+        command, source = UpdateService(self.manifest_path).plan(entry.id)
+        return f"{' '.join(command)}  [{source}]"
+
     def action_filter(self) -> None:
         self.query_one("#search", Input).focus()
+
+    async def action_update(self) -> None:
+        if self.report is None:
+            self.notify("Run a scan before checking for updates.", severity="warning")
+            return
+        if self.install_in_progress:
+            self.notify("Another system operation is already running.", severity="warning")
+            return
+        try:
+            service = UpdateService(self.manifest_path)
+            updates = await asyncio.to_thread(service.check_available)
+            self.entries = [
+                replace(entry, available_version=updates.get(entry.id))
+                for entry in self.report.entries
+            ]
+            self.report = replace(self.report, entries=tuple(self.entries))
+            self._render_table(self.entries)
+        except Exception as exc:
+            self.logger.exception("Could not check for package updates.")
+            self.notify(f"Update check failed: {exc}", severity="error")
+            return
+
+        self.logger.info("Update check completed: available=%d", len(updates))
+        if not updates:
+            self.notify("No updates are available from the supported package manager.")
+            return
+        entry = next(
+            (item for item in self.entries if item.id == self.selected_id),
+            None,
+        )
+        if entry is None or entry.available_version is None:
+            self.notify(
+                f"Found {len(updates)} available update(s); select an updated tool.",
+                severity="information",
+            )
+            return
+        try:
+            command = self._planned_update_command(entry)
+        except Exception as exc:
+            self.logger.exception("Could not plan update for %s.", entry.id)
+            self.notify(f"Could not plan update: {exc}", severity="error")
+            return
+        if self.safe_mode:
+            self.logger.info(
+                "Safe Mode update preview for %s: %s",
+                entry.id,
+                command,
+            )
+            self.push_screen(
+                SafeModePreviewScreen(
+                    f"Update preview: {entry.name}",
+                    ((entry.name, command),),
+                )
+            )
+            return
+        self.logger.info("Update command preview for %s: %s", entry.id, command)
+        self.push_screen(
+            UpdateConfirmScreen(entry.name, command),
+            callback=lambda approved: self._on_update_confirmation(entry, approved),
+        )
+
+    def action_configure_environment(self) -> None:
+        if self.system_info is None or self.report is None:
+            self.notify("Run a scan before configuring the environment.", severity="warning")
+            return
+        if self.install_in_progress:
+            self.notify("Another system operation is already running.", severity="warning")
+            return
+        try:
+            service = EnvironmentConfigurationService(self.manifest_path)
+            plan = service.plan(self.system_info, self.entries)
+        except Exception as exc:
+            self.logger.exception("Could not plan environment configuration.")
+            self.notify(f"Could not configure environment: {exc}", severity="error")
+            return
+
+        preview = plan.preview()
+        if self.safe_mode:
+            self.logger.info("Safe Mode environment configuration preview:\n%s", preview)
+            self.push_screen(
+                SafeModePreviewScreen(
+                    "Configure environment preview",
+                    (("User environment", preview),),
+                )
+            )
+            return
+
+        self.logger.info("Environment configuration plan:\n%s", preview)
+        self.push_screen(
+            EnvironmentConfirmScreen(plan),
+            callback=lambda approved: self._on_environment_confirmation(
+                service,
+                plan,
+                approved,
+            ),
+        )
 
     def action_install(self) -> None:
         if not self.report:
@@ -570,6 +771,102 @@ class ToolMateApp(App[None]):
         if approved and not self.install_in_progress:
             self.install_in_progress = True
             self.run_worker(self._run_batch_installations(entries))
+
+    def _on_update_confirmation(
+        self,
+        entry: CompatibilityResult,
+        approved: bool | None,
+    ) -> None:
+        if approved and self.safe_mode:
+            self.logger.info("Safe Mode blocked update execution for %s.", entry.id)
+            self.notify("Safe Mode is ON; update was not executed.")
+            return
+        if approved and not self.install_in_progress:
+            self.install_in_progress = True
+            self.run_worker(self._run_update(entry))
+
+    def _on_environment_confirmation(
+        self,
+        service: EnvironmentConfigurationService,
+        plan: EnvironmentPlan,
+        approved: bool | None,
+    ) -> None:
+        if approved and self.safe_mode:
+            self.logger.info("Safe Mode blocked environment configuration.")
+            self.notify("Safe Mode is ON; environment was not modified.")
+            return
+        if approved and not self.install_in_progress:
+            self.install_in_progress = True
+            self.run_worker(self._run_environment_configuration(service, plan))
+
+    async def _run_update(self, entry: CompatibilityResult) -> None:
+        output = self.query_one("#install-output", RichLog)
+        output.clear()
+        output.write(f"Starting update for {entry.name}...")
+        cancel_event = Event()
+        self.active_install_cancel = cancel_event
+
+        def stream_output(line: str) -> None:
+            self.logger.info("Update output for %s: %s", entry.id, line)
+            self.call_from_thread(output.write, line)
+
+        try:
+            service = UpdateService(self.manifest_path)
+            result = await asyncio.to_thread(
+                service.execute,
+                entry.id,
+                True,
+                stream_output,
+                cancel_event,
+            )
+        except Exception as exc:
+            self.logger.exception("Update failed for %s.", entry.id)
+            output.write(f"Update failed to start: {exc}")
+            self.notify(f"Update failed: {exc}", severity="error")
+            return
+        finally:
+            self.active_install_cancel = None
+            self.install_in_progress = False
+
+        if result.cancelled:
+            self.logger.warning("Update cancelled for %s.", entry.id)
+            output.write("Update cancelled.")
+            self.notify("Update cancelled.", severity="warning")
+        elif result.succeeded:
+            self.logger.info("Update completed for %s.", entry.id)
+            output.write("Update completed successfully.")
+            self.notify("Update completed.")
+        else:
+            self.logger.error(
+                "Update failed for %s with exit code %s.",
+                entry.id,
+                result.exit_code,
+            )
+            output.write(f"Update exited with code {result.exit_code}.")
+            self.notify("Update completed with errors.", severity="warning")
+        await self.action_scan()
+
+    async def _run_environment_configuration(
+        self,
+        service: EnvironmentConfigurationService,
+        plan: EnvironmentPlan,
+    ) -> None:
+        output = self.query_one("#install-output", RichLog)
+        output.clear()
+        try:
+            backup = await asyncio.to_thread(service.apply, plan, True)
+        except Exception as exc:
+            self.logger.exception("Environment configuration failed.")
+            output.write(f"Environment configuration failed: {exc}")
+            self.notify(f"Environment configuration failed: {exc}", severity="error")
+            return
+        finally:
+            self.install_in_progress = False
+
+        self.logger.info("Environment configured; backup saved to %s.", backup)
+        output.write(f"Environment configured. Backup: {backup}")
+        output.write("Open a new terminal session to use the updated environment.")
+        self.notify("Environment configured. Restart the terminal to apply changes.")
 
     async def _run_installation(self, entry: CompatibilityResult) -> None:
         if self.safe_mode:

@@ -17,6 +17,7 @@ def query_package_version(manager: str, package: str) -> str | None:
         "pacman": ["pacman", "-Qi", package],
         "choco": ["choco", "list", "--exact", "--local-only", package],
         "winget": ["winget", "list", "--id", package, "--exact", "--accept-source-agreements"],
+        "brew": ["brew", "list", "--versions", package],
     }
     command = commands.get(manager)
     if not command:
@@ -54,4 +55,7 @@ def query_package_version(manager: str, package: str) -> str | None:
     if manager == "pacman":
         match = re.search(r"^Version\s*:\s*(\S+)", output, re.MULTILINE)
         return match.group(1) if match else None
+    if manager == "brew":
+        tokens = output.split()
+        return tokens[-1] if len(tokens) >= 2 else None
     return output

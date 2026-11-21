@@ -34,7 +34,7 @@ The application will follow a modular architecture with separation between:
 3. Never execute system commands directly from TUI widgets.
 4. Never hardcode dependency requirements into the scanner.
 5. Use the manifest as the source of dependency requirements.
-6. Use platform-specific adapters for Windows and Linux.
+6. Use platform-specific adapters for Windows, Linux, and macOS.
 7. Make system-changing operations explicit and user-approved.
 8. Verify every installation.
 9. Test functionality before integrating the next module.
@@ -324,8 +324,8 @@ Create distributable builds.
 
 ### Features
 
-- [x] Build wheel and source-distribution artifacts on Windows and Linux.
-- [x] Run automated tests and Ruff on Windows and Linux.
+- [x] Build wheel and source-distribution artifacts on Windows, Linux, and macOS.
+- [x] Run automated tests and Ruff on Windows, Linux, and macOS.
 - [x] Build artifacts in GitHub Actions.
 - [x] Use the `pyproject.toml` project version as the release version source.
 - [x] Document package installation, release tagging, and artifact publication.
@@ -334,6 +334,31 @@ Create distributable builds.
 ### Deliverable
 
 **Status:** [x] Cross-platform package artifacts and release workflow.
+
+## Phase 12: Update/Upgrade System, Environment/PATH Configuration & Homebrew Adapter
+
+### Objective
+Keep installed tools current, safely configure the user's eSim environment, and add
+native Homebrew support for macOS.
+
+### Features
+
+- [x] Check available updates with `winget upgrade`, `apt list --upgradable`,
+  `pacman -Qu`, or `brew outdated`.
+- [x] Show available versions in the dependency table and expose the `[u] Update` action.
+- [x] Require confirmation before upgrades and honor Safe Mode previews.
+- [x] Configure detected executable paths and `ESIM_HOME` through `[c] Configure Env`.
+- [x] Preview exact user environment changes in Safe Mode and require confirmation otherwise.
+- [x] Back up the current shell profile or Windows User PATH values before writing.
+- [x] Avoid overwriting profiles or registry values changed after preview.
+- [x] Add Homebrew installation, version detection, update checking, and upgrade support.
+- [x] Add macOS system, eSim-path, manifest, and CI support.
+- [x] Document a Requirements Compliance checklist and platform behavior in the README.
+
+### Deliverable
+
+**Status:** [x] Confirmed update and environment configuration workflows for Windows,
+Linux, and macOS.
 
 ---
 
@@ -389,6 +414,8 @@ toolmate/
 │       │   ├── __init__.py
 │       │   ├── scan_service.py
 │       │   ├── install_service.py
+│       │   ├── update_service.py
+│       │   └── environment_service.py
 │       │   ├── verification_service.py
 │       │   ├── diagnostic_service.py
 │       │   └── update_service.py
@@ -398,6 +425,7 @@ toolmate/
 │       │   ├── base_installer.py
 │       │   ├── apt_installer.py
 │       │   ├── pacman_installer.py
+│       │   ├── homebrew_installer.py
 │       │   ├── winget_installer.py
 │       │   ├── chocolatey_installer.py
 │       │   ├── pip_installer.py
@@ -407,6 +435,7 @@ toolmate/
 │       │   ├── __init__.py
 │       │   ├── windows.py
 │       │   ├── linux.py
+│       │   ├── macos.py
 │       │   ├── permissions.py
 │       │   └── paths.py
 │       │

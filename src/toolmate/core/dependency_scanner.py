@@ -28,7 +28,7 @@ class DependencyScanner:
         name = str(dependency.get("name", dependency_id))
         platforms = dependency.get("platforms")
         if isinstance(platforms, Mapping):
-            platform_name = "windows" if sys.platform.startswith("win") else "linux"
+            platform_name = self._platform_name()
             platform = platforms.get(platform_name)
             if isinstance(platform, Mapping) and platform.get("supported") is False:
                 return DependencyInventoryEntry(
@@ -144,9 +144,17 @@ class DependencyScanner:
         known_paths = detection.get("known_paths")
         if not isinstance(known_paths, Mapping):
             return ()
-        platform_name = "windows" if sys.platform.startswith("win") else "linux"
+        platform_name = self._platform_name()
         paths = known_paths.get(platform_name)
         return tuple(path for path in paths if isinstance(path, str)) if isinstance(paths, list) else ()
+
+    @staticmethod
+    def _platform_name() -> str:
+        if sys.platform.startswith("win"):
+            return "windows"
+        if sys.platform == "darwin":
+            return "macos"
+        return "linux"
 
     def _deduplicate_installations(
         self,

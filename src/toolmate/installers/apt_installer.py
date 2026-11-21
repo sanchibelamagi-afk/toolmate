@@ -17,6 +17,13 @@ class AptInstaller(BaseInstaller):
             command.insert(0, "sudo")
         return command
 
+    @staticmethod
+    def upgrade_command_for(package: str) -> list[str]:
+        command = ["apt-get", "install", "--only-upgrade", "-y", package]
+        if _requires_sudo():
+            command.insert(0, "sudo")
+        return command
+
     def install(
         self,
         package: str,

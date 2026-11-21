@@ -72,12 +72,14 @@ def test_manifest_contains_full_esim_toolchain_and_package_mappings():
         "choco": "git",
         "apt": "git",
         "pacman": "git",
+        "brew": "git",
     }
     assert service._dependency("iverilog")["package_manager"] == {
         "winget": "Icarus.Verilog",
         "choco": "iverilog",
         "apt": "iverilog",
         "pacman": "iverilog",
+        "brew": "icarus-verilog",
     }
     assert service._dependency("ghdl")["package_manager"] == {
         "winget": "ghdl.ghdl.ucrt64.mcode",
@@ -122,3 +124,20 @@ def test_plan_supports_pacman_for_linux_dependencies(monkeypatch):
         ("sudo", "pacman", "-S", "--noconfirm", "--needed", "verilator"),
         "pacman package verilator",
     )
+
+
+def test_homebrew_install_uses_homebrew_adapter(monkeypatch):
+    service = InstallService("config/manifest.yaml")
+    calls = []
+    monkeypatch.setattr("toolmate.services.install_service.sys.platform", "darwin")
+    monkeypatch.setattr(
+        "toolmate.services.install_service.shutil.which",
+        lambda command: "/opt/homebrew/bin/brew" if command == "brew" else None,
+    )
+    monkeypatch.setattr(
+        "toolmate.services.install_service.HomebrewInstaller.install",
+        lambda self, package, on_output=None, cancel_event=None: calls.append(package),
+    )
+
+    assert service.execute("git", approved=True) is None
+    assert calls == ["git"]
